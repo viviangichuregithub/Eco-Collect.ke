@@ -1,29 +1,15 @@
-import { Poppins } from "next/font/google";
+// src/app/layout.js
 import "./globals.css";
 
-const poppins = Poppins({
-  variable: "--font-poppins",
-  subsets: ["latin"],
-});
-
-const poppinsMono = Poppins({
-  variable: "--font-poppins-mono",
-  subsets: ["latin"],
-});
-
 export const metadata = {
-  title: "Eco-Collect,Kenya",
-  description: "Connecting citizens and corporations for a circular economy",
+  title: "EcoCollect",
+  description: "AI-powered recycling and rewards platform",
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
   );
 }
