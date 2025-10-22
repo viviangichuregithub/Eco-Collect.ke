@@ -1,33 +1,15 @@
+/* src/app/globals.css */
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Global variables */
-:root {
-  --background: #ffffff;
-  --foreground: #0a0a0a;
-  --font-sans: 'Poppins', sans-serif;
-}
-
-/* Global base styles */
 html,
 body {
-  height: 100%;
+  font-family: "Poppins", sans-serif;
+  background-color: #ffffff;
+  color: #000000;
   margin: 0;
   padding: 0;
-  background-color: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans);
-}
-
-* {
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-html {
-  scroll-behavior: smooth;
-}
-
-body {
-  overflow-x: hidden;
 }
