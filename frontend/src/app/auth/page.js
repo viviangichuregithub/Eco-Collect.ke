@@ -1,13 +1,18 @@
 "use client";
-import { useState } from "react";
+
+import React, { useState } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
+import { useAuth } from "../../context/AuthContext";
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
+  const { login, register } = useAuth();
   const router = useRouter();
+  const [apiError, setApiError] = useState("");
+
   const loginSchema = Yup.object({
     email: Yup.string().email("Invalid email").required("Required"),
     password: Yup.string().required("Required"),
@@ -20,83 +25,131 @@ export default function AuthPage() {
     confirmPassword: Yup.string()
       .oneOf([Yup.ref("password"), null], "Passwords must match")
       .required("Required"),
-    role: Yup.string().required("Please select a role"),
+    role: Yup.string().required("Select a role"),
   });
 
-  const handleLogin = (values) => {
-    if (values.email.includes("corp")) {
-      router.push("/corporate");
-    } else {
-      router.push("/civilian");
+  // Handlers
+  const handleLogin = async (values, { setSubmitting }) => {
+    setApiError("");
+    try {
+      const user = await login(values.email, values.password);
+      if (user.role === "civilian") router.push("/civilian");
+      else if (user.role === "corporate") router.push("/corporate");
+    } catch (err) {
+      setApiError(err.message || "Login failed");
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  const handleSignup = (values) => {
-    console.log("Registered:", values);
-    alert("Signup successful!");
-    setIsLogin(true);
+  const handleSignup = async (values, { setSubmitting }) => {
+    setApiError("");
+    try {
+      await register({
+        user_name: values.fullName,
+        email: values.email,
+        password: values.password,
+        role: values.role,
+      });
+      setIsLogin(true); 
+    } catch (err) {
+      setApiError(err.message || "Signup failed");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="flex h-screen w-screen overflow-hidden bg-[#ECF1E6]">
       <div
-        className="w-1/2 bg-cover bg-center"
+        className="flex-1 h-full bg-contain bg-center bg-left bg-no-repeat"
         style={{ backgroundImage: "url('/auth-bg.jpeg')" }}
       ></div>
-      <div className="w-1/2 flex flex-col justify-center items-center p-8 bg-green-500">
-        <h1 className="text-4xl font-bold text mb-2">Eco-Collect</h1>
-        <p className="text-gray-500 mb-8 text-center">
-          Connecting citizens and corporations for a circular economy.
-        </p>
-        <div className="flex mb-8 bg-gray-200 rounded-full p-1 w-64 relative">
-          <motion.div
-            layout
-            className={`absolute top-1 bottom-1 left-1 w-1/2 rounded-full bg-green-600 transition-all duration-300 ${
-              isLogin ? "translate-x-0" : "translate-x-full"
-            }`}
-          />
-          <button
-            className={`flex-1 z-10 text-center font-semibold ${
-              isLogin ? "text-white" : "text-gray-600"
-            }`}
-            onClick={() => setIsLogin(true)}
-          >
-            Login
-          </button>
-          <button
-            className={`flex-1 z-10 text-center font-semibold ${
-              !isLogin ? "text-white" : "text-gray-600"
-            }`}
-            onClick={() => setIsLogin(false)}
-          >
-            Signup
-          </button>
-        </div>
-        <Formik
-          initialValues={
-            isLogin
-              ? { email: "", password: "" }
-              : {
-                  fullName: "",
-                  email: "",
-                  password: "",
-                  confirmPassword: "",
-                  role: "",
-                }
-          }
-          validationSchema={isLogin ? loginSchema : signupSchema}
-          onSubmit={isLogin ? handleLogin : handleSignup}
-        >
-          {({ values, handleChange }) => (
-            <Form className="w-80 space-y-4">
-              {isLogin ? (
-                <>
+      <div className="flex-[1.8] flex items-center justify-center px-6 md:px-20 relative bg-[#ECF1E6] mr-20">
+        <div className="w-full max-w-4xl bg-white/10 rounded-lg shadow-[0_0_30px_rgba(0,0,0,0.3)] flex flex-col h-[90vh] px-16 py-6">
+          <div className="text-center mb-6 sticky top-0 z-10 ">
+            <h1 className="text-4xl font-bold text-[#355E62] mb-1">Eco-Collect</h1>
+            <p className="text-[#717182] text-sm">
+              Connecting citizens and corporations for a circular economy.
+            </p>
+           <div className="flex justify-center mt-6">
+  <div className="flex bg-white rounded-full p-1 relative">
+    <motion.div
+      layout
+      className={`absolute top-1 bottom-1 w-[45%] rounded-full bg-[#355E62] transition-all duration-300 ${
+        isLogin ? "left-[2%]" : "left-[50%]"
+      }`}
+    />
+    <button
+      className={`relative z-10 px-6 font-semibold rounded-full transition-colors duration-300 ${
+        isLogin ? "text-white" : "text-[#355E62]"
+      }`}
+      onClick={() => setIsLogin(true)}
+      type="button"
+    >
+      Login
+    </button>
+    <button
+      className={`relative z-10 px-6 font-semibold rounded-full transition-colors duration-300 ${
+        !isLogin ? "text-white" : "text-[#355E62]"
+      }`}
+      onClick={() => setIsLogin(false)}
+      type="button"
+    >
+      Register
+    </button>
+  </div>
+</div>
+          </div>
+          <div className="flex-1 overflow-y-auto mt-6">
+            {apiError && (
+              <div className="text-red-500 text-center mb-4">{apiError}</div>
+            )}
+            <Formik
+              key={isLogin ? "login" : "signup"}
+              initialValues={
+                isLogin
+                  ? { email: "", password: "" }
+                  : {
+                      fullName: "",
+                      email: "",
+                      password: "",
+                      confirmPassword: "",
+                      role: "",
+                    }
+              }
+              validationSchema={isLogin ? loginSchema : signupSchema}
+              onSubmit={isLogin ? handleLogin : handleSignup}
+            >
+              {({ isSubmitting }) => (
+                <Form className="space-y-4">
+                  {!isLogin && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-[#070D0D]">
+                          Full Name
+                        </label>
+                        <Field
+                          type="text"
+                          name="fullName"
+                          className="w-full p-2 bg-[#C8D8B4]"
+                        />
+                        <ErrorMessage
+                          name="fullName"
+                          component="div"
+                          className="text-red-500 text-sm"
+                        />
+                      </div>
+                    </>
+                  )}
                   <div>
-                    <label>Email</label>
+                    <label className="block text-sm font-medium text-[#070D0D]">
+                      Email
+                    </label>
                     <Field
                       type="email"
                       name="email"
-                      className="w-full p-2 border rounded"
+                      className="w-full p-2 bg-[#C8D8B4]"
                     />
                     <ErrorMessage
                       name="email"
@@ -104,13 +157,14 @@ export default function AuthPage() {
                       className="text-red-500 text-sm"
                     />
                   </div>
-
                   <div>
-                    <label>Password</label>
+                    <label className="block text-sm font-medium text-[#070D0D]">
+                      Password
+                    </label>
                     <Field
                       type="password"
                       name="password"
-                      className="w-full p-2 border rounded"
+                      className="w-full p-2 bg-[#C8D8B4]"
                     />
                     <ErrorMessage
                       name="password"
@@ -118,109 +172,68 @@ export default function AuthPage() {
                       className="text-red-500 text-sm"
                     />
                   </div>
-
-                  <p
-                    className="text-sm text-green-700 cursor-pointer hover:underline"
-                    onClick={() => router.push("/forgot-password")}
-                  >
-                    Forgot password?
-                  </p>
-
-                  <button
-                    type="submit"
-                    className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700"
-                  >
-                    Login
-                  </button>
-                </>
-              ) : (
-                <>
-                  <div>
-                    <label>Full Name</label>
-                    <Field
-                      type="text"
-                      name="fullName"
-                      className="w-full p-2 border rounded"
-                    />
-                    <ErrorMessage
-                      name="fullName"
-                      component="div"
-                      className="text-red-500 text-sm"
-                    />
-                  </div>
-
-                  <div>
-                    <label>Email</label>
-                    <Field
-                      type="email"
-                      name="email"
-                      className="w-full p-2 border rounded"
-                    />
-                    <ErrorMessage
-                      name="email"
-                      component="div"
-                      className="text-red-500 text-sm"
-                    />
-                  </div>
-
-                  <div>
-                    <label>Password</label>
-                    <Field
-                      type="password"
-                      name="password"
-                      className="w-full p-2 border rounded"
-                    />
-                    <ErrorMessage
-                      name="password"
-                      component="div"
-                      className="text-red-500 text-sm"
-                    />
-                  </div>
-
-                  <div>
-                    <label>Confirm Password</label>
-                    <Field
-                      type="password"
-                      name="confirmPassword"
-                      className="w-full p-2 border rounded"
-                    />
-                    <ErrorMessage
-                      name="confirmPassword"
-                      component="div"
-                      className="text-red-500 text-sm"
-                    />
-                  </div>
-
-                  <div>
-                    <label>Role</label>
-                    <div className="flex space-x-4 mt-1">
-                      <label>
-                        <Field type="radio" name="role" value="civilian" />
-                        Civilian
-                      </label>
-                      <label>
-                        <Field type="radio" name="role" value="corporate" />
-                        Corporate
-                      </label>
+                  {isLogin && (
+                    <div className="flex justify-end">
+                      <p
+                        className="text-sm text-[#355E62] cursor-pointer hover:underline"
+                        onClick={() => router.push("/forgot-password")}
+                      >
+                        Forgot password?
+                      </p>
                     </div>
-                    <ErrorMessage
-                      name="role"
-                      component="div"
-                      className="text-red-500 text-sm"
-                    />
-                  </div>
+                  )}
+                  {!isLogin && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-[#070D0D]">
+                          Confirm Password
+                        </label>
+                        <Field
+                          type="password"
+                          name="confirmPassword"
+                          className="w-full p-2 bg-[#C8D8B4]"
+                        />
+                        <ErrorMessage
+                          name="confirmPassword"
+                          component="div"
+                          className="text-red-500 text-sm"
+                        />
+                      </div>
 
+                      <div>
+                        <label className="block text-sm font-medium text-[#070D0D]">
+                          Role
+                        </label>
+                        <div className="flex space-x-4 mt-1">
+                          <label className="flex items-center space-x-1">
+                            <Field type="radio" name="role" value="civilian" />
+                            <span>Civilian</span>
+                          </label>
+                          <label className="flex items-center space-x-1">
+                            <Field type="radio" name="role" value="corporate" />
+                            <span>Corporate</span>
+                          </label>
+                        </div>
+                        <ErrorMessage
+                          name="role"
+                          component="div"
+                          className="text-red-500 text-sm"
+                        />
+                      </div>
+                    </>
+                  )}
                   <button
                     type="submit"
-                    className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700"
+                    disabled={isSubmitting}
+                    className="mx-auto block bg-[#355E62] text-white px-10  rounded-full hover:bg-[#2c4b4f] transition-all duration-300"
                   >
-                    Register
+                    {isLogin ? "Login" : "Register"}
                   </button>
-                </>
+                </Form>
               )}
-            </Form>
-          )}
-        </Formik>
+            </Formik>
+          </div>
+        </div>
       </div>
     </div>
   );
