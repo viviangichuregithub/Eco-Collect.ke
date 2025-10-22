@@ -1,170 +1,227 @@
 "use client";
-
-import Image from "next/image";
 import { useState } from "react";
+import { Formik, Form, Field, ErrorMessage } from "formik";
+import * as Yup from "yup";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
+  const router = useRouter();
+  const loginSchema = Yup.object({
+    email: Yup.string().email("Invalid email").required("Required"),
+    password: Yup.string().required("Required"),
+  });
+
+  const signupSchema = Yup.object({
+    fullName: Yup.string().required("Required"),
+    email: Yup.string().email("Invalid email").required("Required"),
+    password: Yup.string().min(6, "At least 6 chars").required("Required"),
+    confirmPassword: Yup.string()
+      .oneOf([Yup.ref("password"), null], "Passwords must match")
+      .required("Required"),
+    role: Yup.string().required("Please select a role"),
+  });
+
+  const handleLogin = (values) => {
+    if (values.email.includes("corp")) {
+      router.push("/corporate");
+    } else {
+      router.push("/civilian");
+    }
+  };
+
+  const handleSignup = (values) => {
+    console.log("Registered:", values);
+    alert("Signup successful!");
+    setIsLogin(true);
+  };
 
   return (
-    <main className="flex flex-col md:flex-row h-screen overflow-hidden">
-      <div className="hidden md:flex w-1/2 relative h-full">
-        <Image
-          src="/motivation_image.jpeg" 
-          alt="Eco motivation"
-          fill
-          className="object-cover"
-          priority
-        />
-        <div className="absolute inset-0 bg-[#C8D8B4] flex items-center justify-center">
-          <div className="text-center px-6 text-white">
-            <h1 className="text-4xl font-bold">Eco-Collect Kenya</h1>
-            <p className="mt-2 text-sm italic">
-            Connecting citizens and corporations for a circular economy
-            </p>
-          </div>
-        </div>
-      </div>
-      <div className="flex w-full md:w-1/2 h-full items-center justify-center bg-white py-10 px-6 sm:px-10 relative">
-        <div className="absolute inset-0 md:hidden">
-          <Image
-            src="/logo.jpeg"
-            alt="Eco background"
-            fill
-            className="object-cover opacity-20 -z-10"
-            priority
+    <div className="min-h-screen flex">
+      <div
+        className="w-1/2 bg-cover bg-center"
+        style={{ backgroundImage: "url('/auth-bg.jpeg')" }}
+      ></div>
+      <div className="w-1/2 flex flex-col justify-center items-center p-8 bg-green-500">
+        <h1 className="text-4xl font-bold text mb-2">Eco-Collect</h1>
+        <p className="text-gray-500 mb-8 text-center">
+          Connecting citizens and corporations for a circular economy.
+        </p>
+        <div className="flex mb-8 bg-gray-200 rounded-full p-1 w-64 relative">
+          <motion.div
+            layout
+            className={`absolute top-1 bottom-1 left-1 w-1/2 rounded-full bg-green-600 transition-all duration-300 ${
+              isLogin ? "translate-x-0" : "translate-x-full"
+            }`}
           />
+          <button
+            className={`flex-1 z-10 text-center font-semibold ${
+              isLogin ? "text-white" : "text-gray-600"
+            }`}
+            onClick={() => setIsLogin(true)}
+          >
+            Login
+          </button>
+          <button
+            className={`flex-1 z-10 text-center font-semibold ${
+              !isLogin ? "text-white" : "text-gray-600"
+            }`}
+            onClick={() => setIsLogin(false)}
+          >
+            Signup
+          </button>
         </div>
-
-        <motion.div
-          initial={{ y: 30, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.5 }}
-          className="w-full max-w-md bg-white/90 border border-green-100 rounded-3xl shadow-lg p-8 sm:p-10"
+        <Formik
+          initialValues={
+            isLogin
+              ? { email: "", password: "" }
+              : {
+                  fullName: "",
+                  email: "",
+                  password: "",
+                  confirmPassword: "",
+                  role: "",
+                }
+          }
+          validationSchema={isLogin ? loginSchema : signupSchema}
+          onSubmit={isLogin ? handleLogin : handleSignup}
         >
-          <div className="text-center mb-4">
-            <h2 className="text-3xl font-bold text-green-700">Eco-Collect Kenya</h2>
-            <p className="text-gray-600 mt-1 text-sm italic">
-              Connecting citizens and corporations for a circular economy
-            </p>
-          </div>
-          <div className="flex bg-gray-100 rounded-full p-1 mt-4 mb-6">
-            <button
-              onClick={() => setIsLogin(true)}
-              className={`w-1/2 py-2 rounded-full transition-all duration-300 ${
-                isLogin ? "bg-green-600 text-white" : "text-gray-700"
-              }`}
-            >
-              Login
-            </button>
-            <button
-              onClick={() => setIsLogin(false)}
-              className={`w-1/2 py-2 rounded-full transition-all duration-300 ${
-                !isLogin ? "bg-green-600 text-white" : "text-gray-700"
-              }`}
-            >
-              Sign Up
-            </button>
-          </div>
-          {isLogin ? <LoginForm /> : <SignupForm />}
-        </motion.div>
-      </div>
-    </main>
-  );
-}
+          {({ values, handleChange }) => (
+            <Form className="w-80 space-y-4">
+              {isLogin ? (
+                <>
+                  <div>
+                    <label>Email</label>
+                    <Field
+                      type="email"
+                      name="email"
+                      className="w-full p-2 border rounded"
+                    />
+                    <ErrorMessage
+                      name="email"
+                      component="div"
+                      className="text-red-500 text-sm"
+                    />
+                  </div>
 
-function LoginForm() {
-  return (
-    <form className="space-y-4 mt-2">
-      <div>
-        <label className="block text-sm font-medium text-gray-700">Email</label>
-        <input
-          type="email"
-          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-green-400 focus:outline-none"
-          placeholder="Enter your email"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700">Password</label>
-        <input
-          type="password"
-          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-green-400 focus:outline-none"
-          placeholder="Enter your password"
-        />
-      </div>
-      <div className="text-right">
-        <a href="#" className="text-sm text-green-600 hover:underline">
-          Forgot password?
-        </a>
-      </div>
-      <button
-        type="submit"
-        className="w-full bg-green-600 text-white py-2 rounded-md hover:bg-green-700 transition"
-      >
-        Login
-      </button>
-    </form>
-  );
-}
+                  <div>
+                    <label>Password</label>
+                    <Field
+                      type="password"
+                      name="password"
+                      className="w-full p-2 border rounded"
+                    />
+                    <ErrorMessage
+                      name="password"
+                      component="div"
+                      className="text-red-500 text-sm"
+                    />
+                  </div>
 
-function SignupForm() {
-  return (
-    <form className="space-y-4 mt-2">
-      <div>
-        <label className="block text-sm font-medium text-gray-700">Full Name</label>
-        <input
-          type="text"
-          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-green-400 focus:outline-none"
-          placeholder="Enter your full name"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700">Email</label>
-        <input
-          type="email"
-          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-green-400 focus:outline-none"
-          placeholder="Enter your email"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700">Password</label>
-        <input
-          type="password"
-          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-green-400 focus:outline-none"
-          placeholder="Enter your password"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700">
-          Confirm Password
-        </label>
-        <input
-          type="password"
-          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-green-400 focus:outline-none"
-          placeholder="Confirm password"
-        />
-      </div>
-      <div>
-        <p className="text-sm font-medium mb-1 text-gray-700">Select Role</p>
-        <div className="flex gap-4">
-          <label className="flex items-center gap-2">
-            <input type="radio" name="role" value="civilian" />
-            Civilian
-          </label>
-          <label className="flex items-center gap-2">
-            <input type="radio" name="role" value="corporate" />
-            Corporate
-          </label>
-        </div>
-      </div>
+                  <p
+                    className="text-sm text-green-700 cursor-pointer hover:underline"
+                    onClick={() => router.push("/forgot-password")}
+                  >
+                    Forgot password?
+                  </p>
 
-      <button
-        type="submit"
-        className="w-full bg-green-600 text-white py-2 rounded-md hover:bg-green-700 transition"
-      >
-        Register
-      </button>
-    </form>
+                  <button
+                    type="submit"
+                    className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700"
+                  >
+                    Login
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <label>Full Name</label>
+                    <Field
+                      type="text"
+                      name="fullName"
+                      className="w-full p-2 border rounded"
+                    />
+                    <ErrorMessage
+                      name="fullName"
+                      component="div"
+                      className="text-red-500 text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label>Email</label>
+                    <Field
+                      type="email"
+                      name="email"
+                      className="w-full p-2 border rounded"
+                    />
+                    <ErrorMessage
+                      name="email"
+                      component="div"
+                      className="text-red-500 text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label>Password</label>
+                    <Field
+                      type="password"
+                      name="password"
+                      className="w-full p-2 border rounded"
+                    />
+                    <ErrorMessage
+                      name="password"
+                      component="div"
+                      className="text-red-500 text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label>Confirm Password</label>
+                    <Field
+                      type="password"
+                      name="confirmPassword"
+                      className="w-full p-2 border rounded"
+                    />
+                    <ErrorMessage
+                      name="confirmPassword"
+                      component="div"
+                      className="text-red-500 text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label>Role</label>
+                    <div className="flex space-x-4 mt-1">
+                      <label>
+                        <Field type="radio" name="role" value="civilian" />
+                        Civilian
+                      </label>
+                      <label>
+                        <Field type="radio" name="role" value="corporate" />
+                        Corporate
+                      </label>
+                    </div>
+                    <ErrorMessage
+                      name="role"
+                      component="div"
+                      className="text-red-500 text-sm"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700"
+                  >
+                    Register
+                  </button>
+                </>
+              )}
+            </Form>
+          )}
+        </Formik>
+      </div>
+    </div>
   );
 }
