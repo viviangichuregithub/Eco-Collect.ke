@@ -12,7 +12,6 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body>
         <AuthProvider>
-          {/* You can add a Navbar here later */}
           {children}
         </AuthProvider>
       </body>
