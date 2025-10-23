@@ -1,6 +1,6 @@
 // src/app/layout.js
 import "./globals.css";
-import { AuthProvider } from "../context/AuthContext"; 
+import { AuthProvider } from "../context/AuthContext";
 
 export const metadata = {
   title: "EcoCollect",
@@ -11,7 +11,10 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          {/* You can add a Navbar here later */}
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

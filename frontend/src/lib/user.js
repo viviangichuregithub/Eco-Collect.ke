@@ -1,16 +1,22 @@
-// lib/user.js
-import { api } from "./api";
+// user.js
+import api from "./api";
 
-/**
- * User-related API functions
- */
-export const userApi = {
-  login: (email, password) => api.post("login", { email, password }),
-  register: ({ user_name, email, password, role }) =>
-    api.post("register", { user_name, email, password, role }),
-  logout: () => api.post("logout"),
-  profile: () => api.get("profile"),
-  requestPasswordReset: (email) => api.post("request-password-reset", { email }),
-  resetPassword: (token, newPassword) =>
-    api.post("reset-password", { token, new_password: newPassword }),
+export const forgotPassword = async (email) => {
+  const res = await api.post("/auth/forgot-password", { email });
+  return res.data;
+};
+
+export const resetPassword = async (token, newPassword) => {
+  const res = await api.post(`/auth/reset-password/${token}`, { new_password: newPassword });
+  return res.data;
+};
+
+export const updateProfile = async (data) => {
+  const res = await api.post("/user/update", data);
+  return res.data;
+};
+
+export const getUserPoints = async () => {
+  const res = await api.get("/auth/me");
+  return res.data.point_score;
 };

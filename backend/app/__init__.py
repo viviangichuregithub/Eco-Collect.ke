@@ -1,31 +1,39 @@
-from flask import Flask, jsonify
-from flask_cors import CORS
-from flask_jwt_extended import JWTManager
-from .config import DevelopmentConfig
-from .db import Base, engine
-from .routes.user_route import bp as user_bp
-
+from flask import Flask
+from app.config import DevelopmentConfig
+from app.extensions import db, bcrypt, migrate, cors
+from flask_session import Session
+import os
 
 def create_app(config_class=DevelopmentConfig):
-    """
-    Flask application factory pattern
-    """
     app = Flask(__name__)
     app.config.from_object(config_class)
 
-    # --- Initialize extensions ---
-    CORS(app, supports_credentials=True, origins=[app.config["CORS_ORIGINS"]])
-    JWTManager(app)
+    # Setup session to store cookies in the instance folder
+    app.config.update(
+        SESSION_TYPE="filesystem",
+        SESSION_FILE_DIR=os.path.join(os.path.dirname(__file__), "..", "instance", "flask_sessions"),
+        SESSION_COOKIE_HTTPONLY=True,
+        SESSION_COOKIE_SAMESITE="Lax",
+        SESSION_COOKIE_SECURE=False,  # dev only
+        SESSION_PERMANENT=False,
+    )
+    sess = Session(app)  # initialize session
 
-    # --- Register blueprints ---
-    app.register_blueprint(user_bp, url_prefix="/api/users")
+    # Initialize extensions
+    db.init_app(app)
+    bcrypt.init_app(app)
+    migrate.init_app(app, db)
 
-    # --- Initialize database ---
-    Base.metadata.create_all(bind=engine)
+    # CORS with credentials
+    cors.init_app(app, supports_credentials=True, origins=[config_class.CORS_ORIGINS])
 
-    # --- Basic route for testing ---
-    @app.route("/")
-    def home():
-        return jsonify({"message": "Eco-Collect backend running "})
+    # Register blueprints
+    from app.routes.auth import auth_bp
+    app.register_blueprint(auth_bp, url_prefix="/auth")
+
+    from app.models import user  # ensure models are loaded
+
+
+    os.makedirs(app.config["SESSION_FILE_DIR"], exist_ok=True)
 
     return app

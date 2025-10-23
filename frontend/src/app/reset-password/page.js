@@ -5,7 +5,7 @@ import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { motion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
-import { userApi } from "../../lib/user";
+import { resetPassword } from "../../lib/user";
 
 const ResetPasswordPage = () => {
   const router = useRouter();
@@ -31,11 +31,11 @@ const ResetPasswordPage = () => {
     setError("");
     setSuccess("");
     try {
-      await userApi.resetPassword(token, values.newPassword);
-      setSuccess("Password successfully reset!");
+      await resetPassword(token, values.newPassword); // call backend
+      setSuccess("Password successfully reset! Redirecting to login...");
       setTimeout(() => router.push("/auth"), 2000);
     } catch (err) {
-      setError(err.message || "Failed to reset password");
+      setError(err.response?.data?.error || "Failed to reset password");
     } finally {
       setSubmitting(false);
     }
@@ -46,7 +46,7 @@ const ResetPasswordPage = () => {
       <motion.div
         initial={{ opacity: 0, y: -30 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md  bg-white/10 shadow-[0_0_30px_rgba(0,0,0,0.3)] rounded-2xl p-8"
+        className="w-full max-w-md bg-white/10 shadow-[0_0_30px_rgba(0,0,0,0.3)] rounded-2xl p-8"
       >
         <h1 className="text-2xl font-bold text-center text-[#355E62] mb-4">
           Reset Password
@@ -96,7 +96,7 @@ const ResetPasswordPage = () => {
               <button
                 type="submit"
                 disabled={isSubmitting || !token}
-                className="mx-auto block bg-[#355E62] text-white px-6  rounded-full hover:bg-[#2c4b4f] transition-all duration-300"
+                className="mx-auto block bg-[#355E62] text-white px-6 rounded-full hover:bg-[#2c4b4f] transition-all duration-300"
               >
                 {isSubmitting ? "Resetting..." : "Reset Password"}
               </button>

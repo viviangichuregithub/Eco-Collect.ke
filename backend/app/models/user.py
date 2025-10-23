@@ -1,18 +1,37 @@
-from sqlalchemy import Column, Integer, String, DateTime, func
-from db import Base
+from datetime import datetime
+from app import db, bcrypt
 
-class User(Base):
+class User(db.Model):
+   
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True)
-    user_name = Column(String(150), nullable=False)
-    email = Column(String(255), unique=True, nullable=False, index=True)
-    password_hash = Column(String(255), nullable=False)
-    role = Column(String(50), nullable=False, default="civilian")  # 'civilian' or 'corporate'
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    profile_image = Column(String(255), nullable=True)
-    points = Column(Integer, default=0)  # for civilians (corporates can have 0)
-    password_reset_token = Column(String(255), nullable=True)
+    id = db.Column(db.Integer, primary_key=True)
+    user_name = db.Column(db.String(150), nullable=False, unique=True)
+    email = db.Column(db.String(255), nullable=False, unique=True, index=True)
+    role = db.Column(db.String(50), nullable=False, default="civilian") 
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    password_hashed = db.Column(db.String(255), nullable=False)
+    terms_approved = db.Column(db.Boolean, default=False)
+    password_reset_token = db.Column(db.String(255), nullable=True)
+
+    point_score = db.Column(db.Integer, default=0)  
+
+    profile_image = db.Column(db.String(500), nullable=True)
+
+    def set_password(self, password: str) -> None:
+        """Hashes and sets the user's password."""
+        self.password_hashed = bcrypt.generate_password_hash(password).decode("utf-8")
+
+    def check_password(self, password: str) -> bool:
+        """Verifies a password against the stored hash."""
+        return bcrypt.check_password_hash(self.password_hashed, password)
+
+    def add_points(self, points: int) -> None:
+        """Adds reward points (for civilians)."""
+        if self.role == "civilian":
+            self.point_score += points
+            db.session.commit()
 
     def __repr__(self):
-        return f"<User {self.email} ({self.role})>"
+        return f"<User {self.user_name} ({self.role})>"
