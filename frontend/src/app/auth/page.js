@@ -15,6 +15,7 @@ export default function AuthPage() {
   const [apiError, setApiError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const loginSchema = Yup.object({
     email: Yup.string().email("Invalid email").required("Required"),
     password: Yup.string().required("Required"),
@@ -29,11 +30,11 @@ export default function AuthPage() {
       .required("Required"),
     role: Yup.string().required("Select a role"),
   });
+
   const handleLogin = async (values, { setSubmitting }) => {
     setApiError("");
     try {
       const user = await login(values.email, values.password);
-
       if (user.role === "civilian") router.push("/civilian");
       else if (user.role === "corporative") router.push("/corporative");
       else router.push("/");
@@ -54,7 +55,6 @@ export default function AuthPage() {
         role: values.role,
         terms_approved: true,
       });
-
       if (user) {
         if (user.role === "civilian") router.push("/civilian");
         else if (user.role === "corporative") router.push("/corporative");
@@ -69,12 +69,16 @@ export default function AuthPage() {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#ECF1E6]">
+      {/* Left Image */}
       <div
         className="flex-1 h-full bg-contain bg-center bg-left bg-no-repeat"
         style={{ backgroundImage: "url('/auth-bg.jpeg')" }}
       />
+
+      {/* Form Section */}
       <div className="flex-[1.8] flex items-center justify-center px-6 md:px-20 relative bg-[#ECF1E6] mr-20">
         <div className="w-full max-w-4xl bg-white/10 rounded-lg shadow-[0_0_30px_rgba(0,0,0,0.3)] flex flex-col h-[90vh] px-16 py-6">
+          {/* Toggle Header */}
           <div className="text-center mb-6 sticky top-0 z-10">
             <h1 className="text-4xl font-bold text-[#355E62] mb-1">Eco-Collect</h1>
             <p className="text-[#717182] text-sm">
@@ -111,6 +115,7 @@ export default function AuthPage() {
             </div>
           </div>
 
+          {/* Form */}
           <div className="flex-1 overflow-y-auto mt-6">
             {apiError && <div className="text-red-500 text-center mb-4">{apiError}</div>}
 
@@ -128,9 +133,7 @@ export default function AuthPage() {
                 <Form className="space-y-4">
                   {!isLogin && (
                     <div>
-                      <label className="block text-sm font-medium text-[#070D0D]">
-                        Full Name
-                      </label>
+                      <label className="block text-sm font-medium text-[#070D0D]">Full Name</label>
                       <Field type="text" name="fullName" className="w-full p-2 bg-[#C8D8B4]" />
                       <ErrorMessage name="fullName" component="div" className="text-red-500 text-sm" />
                     </div>
@@ -141,6 +144,7 @@ export default function AuthPage() {
                     <Field type="email" name="email" className="w-full p-2 bg-[#C8D8B4]" />
                     <ErrorMessage name="email" component="div" className="text-red-500 text-sm" />
                   </div>
+
                   <div className="relative">
                     <label className="block text-sm font-medium text-[#070D0D]">Password</label>
                     <Field
@@ -148,14 +152,12 @@ export default function AuthPage() {
                       name="password"
                       className="w-full p-2 bg-[#C8D8B4] pr-10"
                     />
-                    <div
-                      className="absolute top-8 right-2 cursor-pointer"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
+                    <div className="absolute top-8 right-2 cursor-pointer" onClick={() => setShowPassword(!showPassword)}>
                       {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                     </div>
                     <ErrorMessage name="password" component="div" className="text-red-500 text-sm" />
                   </div>
+
                   {!isLogin && (
                     <div className="relative">
                       <label className="block text-sm font-medium text-[#070D0D]">Confirm Password</label>
@@ -164,10 +166,7 @@ export default function AuthPage() {
                         name="confirmPassword"
                         className="w-full p-2 bg-[#C8D8B4] pr-10"
                       />
-                      <div
-                        className="absolute top-8 right-2 cursor-pointer"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      >
+                      <div className="absolute top-8 right-2 cursor-pointer" onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
                         {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                       </div>
                       <ErrorMessage name="confirmPassword" component="div" className="text-red-500 text-sm" />
@@ -184,6 +183,7 @@ export default function AuthPage() {
                       </p>
                     </div>
                   )}
+
                   {!isLogin && (
                     <div>
                       <label className="block text-sm font-medium text-[#070D0D]">Role</label>
@@ -208,6 +208,31 @@ export default function AuthPage() {
                   >
                     {isLogin ? "Login" : "Register"}
                   </button>
+
+                  {/* Toggle message below button */}
+                  <div className="text-center mt-4 text-sm text-[#355E62]">
+                    {isLogin ? (
+                      <>
+                        Don't have an account?{" "}
+                        <span
+                          className="font-semibold cursor-pointer hover:underline"
+                          onClick={() => setIsLogin(false)}
+                        >
+                          Register
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        Already have an account?{" "}
+                        <span
+                          className="font-semibold cursor-pointer hover:underline"
+                          onClick={() => setIsLogin(true)}
+                        >
+                          Login
+                        </span>
+                      </>
+                    )}
+                  </div>
                 </Form>
               )}
             </Formik>
