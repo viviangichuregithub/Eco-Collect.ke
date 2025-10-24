@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+
+>>>>>>> 9368cd430b3b59cb1cb013e4824152f0e2f2bbe2
 "use client"
 import React, { useState, useEffect } from 'react'
 import apiService from '../lib/api'
@@ -513,4 +517,8 @@ export default function Profile() {
       )}
     </div>
   )
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 9368cd430b3b59cb1cb013e4824152f0e2f2bbe2
