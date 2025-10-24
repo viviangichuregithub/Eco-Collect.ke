@@ -1,19 +1,13 @@
 /** @type {import('tailwindcss').Config} */
-module.exports = {
+export default {
   content: [
-    "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./app/**/*.{js,ts,jsx,tsx}",
+    "./pages/**/*.{js,ts,jsx,tsx}",
+    "./components/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    extend: {
-      fontFamily: {
-        'poppins': ['Poppins', 'sans-serif'],
-      },
-      boxShadow: {
-        'custom': 'rgba(0, 0, 0, 0.16) 0px 1px 4px',
-      },
-    },
+    extend: {},
   },
   plugins: [],
-}
+};
+
