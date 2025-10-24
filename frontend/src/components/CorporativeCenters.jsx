@@ -42,7 +42,7 @@ export default function CorporativeCenters() {
 	});
 
 	const BUTTON_STYLE =
-		"w-[132px] h-[32px] bg-[#355E62] rounded-[64px] text-white hover:cursor-pointer font-poppins text-[14px] font-light";
+		"w-[132px] h-[32px] bg-[#355E62] rounded-[64px] text-[#ffff] hover:cursor-pointer font-poppins text-[14px] font-light";
 
 	const handleChange = (e) => {
 		const { name, value } = e.target;
@@ -114,10 +114,10 @@ export default function CorporativeCenters() {
 		<div className="w-full max-w-4xl mx-auto p-8 bg-white text-black text-poppins">
 			{/* Header Section */}
 			<div className="mb-4">
-				<h1 className="text-[32px] font-semibold text-gray-700 mb-2">
+				<h1 className="text-[36px] font-lightbold text-[#355E62] mb-2">
 					Collection Centers
 				</h1>
-				<p className="text-gray-500 text-lg">
+				<p className="text-gray-500 text-[14px]">
 					Manage your {collectionCenters.length} collection centers
 				</p>
 
