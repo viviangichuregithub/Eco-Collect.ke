@@ -1,5 +1,6 @@
 // src/app/layout.js
 import "./globals.css";
+
 import { AuthProvider } from "../context/AuthContext";
 
 export const metadata = {
