@@ -188,31 +188,46 @@ export default function CivilianCenters() {
       company: "Safaricom PLC",
       address: "Kenyatta Ave, Nairobi CBD",
       phone: "+254 722 000 000",
-      hours: "Mon - Fri: 8:00 AM - 5:00 PM"
+      hours: "Mon - Fri: 8:00 AM - 5:00 PM",
+      latitude: -1.2841,
+      longitude: 36.8155,
+      accepted_waste_types: ['Electronic', 'Plastic', 'Metal'],
+      rating: 4.8,
+      isOpen: true
     },
     {
       id: 2,
-      name: "Safaricom E-Waste CBD",
-      company: "Safaricom PLC", 
-      address: "Kenyatta Ave, Nairobi CBD",
-      phone: "+254 722 000 000",
-      hours: "Mon - Fri: 8:00 AM - 5:00 PM"
+      name: "Green Cycle Center Kilimani",
+      company: "Green Cycle Kenya", 
+      address: "Argwings Kodhek Rd, Kilimani",
+      phone: "+254 722 111 000",
+      hours: "Mon - Sat: 7:00 AM - 6:00 PM",
+      latitude: -1.2921,
+      longitude: 36.8219,
+      accepted_waste_types: ['Plastic', 'Glass', 'Paper'],
+      rating: 4.6,
+      isOpen: true
     },
     {
       id: 3,
-      name: "Safaricom E-Waste CBD",
-      company: "Safaricom PLC",
-      address: "Kenyatta Ave, Nairobi CBD", 
-      phone: "+254 722 000 000",
-      hours: "Mon - Fri: 8:00 AM - 5:00 PM"
+      name: "Eco Point Westlands",
+      company: "Eco Solutions Ltd",
+      address: "Waiyaki Way, Westlands", 
+      phone: "+254 722 222 000",
+      hours: "Mon - Fri: 8:00 AM - 5:00 PM",
+      latitude: -1.2630,
+      longitude: 36.8063,
+      accepted_waste_types: ['Glass', 'Metal', 'Electronic'],
+      rating: 4.7,
+      isOpen: false
     }
   ]
 
   if (loading) {
     return (
-      <div className='w-full max-w-4xl mx-auto p-8 bg-white text-black text-poppins'>
+      <div className='w-full max-w-4xl mx-auto p-8 bg-white text-black font-poppins'>
         <div className='flex items-center justify-center h-64'>
-          <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-[#355E62]'></div>
+          <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-green-600'></div>
           <span className='ml-3 text-gray-600'>Loading collection centers...</span>
         </div>
       </div>
@@ -220,7 +235,7 @@ export default function CivilianCenters() {
   }
 
   return (
-    <div className='w-full max-w-6xl mx-auto p-8 bg-white text-black text-poppins'>
+    <div className='w-full max-w-6xl mx-auto p-8 bg-white text-black font-poppins'>
       {/* Header Section */}
       <div className='mb-8'>
         <div className='flex items-center justify-between'>
@@ -246,7 +261,7 @@ export default function CivilianCenters() {
               placeholder="Search by name, company, or address..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className='w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#355E62]'
+              className='w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-eco-green'
             />
           </div>
 
@@ -256,7 +271,7 @@ export default function CivilianCenters() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className='w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#355E62]'>
+              className='w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-eco-green'>
               <option value="name">Name (A-Z)</option>
               {userLocation && <option value="distance">Distance</option>}
               <option value="rating">Rating</option>
@@ -342,7 +357,7 @@ export default function CivilianCenters() {
           collectionCenters.map((center) => (
             <div 
               key={center.id}
-              className='bg-[#ECF1E6] rounded-lg p-6 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer'
+              className='bg-eco-light rounded-lg p-6 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer'
               onClick={() => viewCenterDetails(center.id)}
             >
               <div className='flex justify-between items-start'>
@@ -352,7 +367,7 @@ export default function CivilianCenters() {
                     <div className='flex items-center justify-between'>
                       <h3 className='text-lg font-semibold text-gray-800 mb-1'>{center.name}</h3>
                       {center.distance && (
-                        <span className='text-sm bg-[#355E62] text-white px-2 py-1 rounded-full'>
+                        <span className='text-sm bg-eco-green text-white px-2 py-1 rounded-full'>
                           {center.distance.toFixed(1)}km away
                         </span>
                       )}
