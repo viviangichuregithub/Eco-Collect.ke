@@ -39,7 +39,6 @@ def register():
     db.session.add(user)
     db.session.commit()
 
-    # Optionally auto-login user after registration
     session["user_id"] = user.id
     session["role"] = user.role
 
@@ -157,4 +156,54 @@ def get_profile():
         "role": user.role,
         "point_score": user.point_score,
         "profile_image": user.profile_image
+    }), 200
+
+# -------------------------------
+# UPLOAD PROFILE IMAGE
+# -------------------------------
+import os
+from werkzeug.utils import secure_filename
+from flask import current_app
+
+UPLOAD_FOLDER = os.path.join("static", "uploads", "profile_images")
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
+
+def allowed_file(filename):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@auth_bp.route("/user/upload-image", methods=["POST"])
+def upload_profile_image():
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Not authenticated"}), 401
+
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    if "file" not in request.files:
+        return jsonify({"error": "No file uploaded"}), 400
+
+    file = request.files["file"]
+    if file.filename == "":
+        return jsonify({"error": "Empty filename"}), 400
+    if not allowed_file(file.filename):
+        return jsonify({"error": "Invalid file type"}), 400
+
+    # Ensure absolute path inside Flask app
+    absolute_upload_folder = os.path.join(current_app.root_path, "static", "uploads", "profile_images")
+    os.makedirs(absolute_upload_folder, exist_ok=True)
+
+    filename = secure_filename(file.filename)
+    filepath = os.path.join(absolute_upload_folder, filename)
+    file.save(filepath)
+
+    # URL accessible from frontend
+    image_url = f"/static/uploads/profile_images/{filename}"
+    user.profile_image = image_url
+    db.session.commit()
+
+    return jsonify({
+        "message": "Profile image uploaded successfully",
+        "image_url": image_url
     }), 200
