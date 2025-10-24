@@ -309,7 +309,7 @@ export default function Verification() {
 		<svg
 			aria-hidden
 			viewBox="0 0 24 24"
-			className={`w-5 h-5 ${className}`}
+			className={`w-3 h-3 ${className}`}
 			fill="none"
 			stroke="currentColor"
 		>
@@ -331,7 +331,7 @@ export default function Verification() {
 		<svg
 			aria-hidden
 			viewBox="0 0 24 24"
-			className={`w-5 h-5 ${className}`}
+			className={`w-3 h-3 ${className}`}
 			fill="none"
 			stroke="currentColor"
 		>
@@ -359,7 +359,7 @@ export default function Verification() {
 		<svg
 			aria-hidden
 			viewBox="0 0 24 24"
-			className={`w-5 h-5 ${className}`}
+			className={`w-3 h-3 ${className}`}
 			fill="none"
 			stroke="currentColor"
 		>
@@ -418,8 +418,8 @@ export default function Verification() {
 				{toShow.map((u) => (
 					<article
 						key={u.id}
-						className="bg-[#EEF6EE] border border-gray-200 rounded-2xl p-4 shadow-sm flex flex-col w-[340px] h-[396px]"
-						style={{ width: 340, height: 396 }}
+						className="bg-[#EEF6EE] border border-gray-200 rounded-2xl p-4 shadow-sm flex flex-col w-[340px] h-auto"
+						style={{ width: 340 }}
 					>
 						{/* Header */}
 						<header className="mb-3">
@@ -442,9 +442,9 @@ export default function Verification() {
 
 						{/* Info row: icons on top of values; arranged horizontally */}
 						<div className="mt-2 flex-1 flex flex-col justify-between">
-							<div className="grid grid-cols-3 gap-4">
+							<div className="flex-row justify-start items-start gap-4">
 								<InfoIconBlock
-									Icon={() => <IconUser className="text-gray-600" />}
+									Icon={() => <IconUser className="text-gray-600 " />}
 									value={u.user_name}
 									ariaLabel="User"
 								/>
@@ -468,7 +468,7 @@ export default function Verification() {
 							<div className="mt-4 flex gap-3 justify-between">
 								<button
 									onClick={() => rejectUpload(u.id)}
-									className={`${BUTTON_FIXED} bg-red-600 hover:bg-red-700`}
+									className={`${BUTTON_FIXED} bg-[#CC0D0D]`}
 									aria-label={`Reject upload ${u.id}`}
 								>
 									Reject
@@ -476,7 +476,7 @@ export default function Verification() {
 
 								<button
 									onClick={() => verifyUpload(u.id)}
-									className={`${BUTTON_FIXED} bg-green-600 hover:bg-green-700`}
+									className={`${BUTTON_FIXED} bg-[#355e62]`}
 									aria-label={`Verify upload ${u.id}`}
 								>
 									Verify
