@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-=======
-
->>>>>>> 9368cd430b3b59cb1cb013e4824152f0e2f2bbe2
 "use client"
 import React, { useState, useEffect } from 'react'
 import apiService from '../lib/api'
@@ -75,37 +71,22 @@ export default function Profile() {
 
   const loadUserStats = async () => {
     try {
-      const stats = await apiService.getUserSubmissionStats()
-      setImpactStats({
-        totalSubmissions: stats.total_submissions || 0,
-        totalWeight: stats.total_weight || 0,
-        co2Reduced: stats.co2_reduced || '0kg',
-        pointsEarned: stats.total_points || 0,
-        pointsAvailable: stats.total_points || 0,
-        rank: "Eco Warrior",
-        weeklyGoal: 10,
-        weeklyProgress: Math.min(stats.total_submissions || 0, 10),
-        monthlyGoal: 40,
-        monthlyProgress: Math.min(stats.total_submissions || 0, 40),
-        verifiedSubmissions: stats.verified_submissions || 0,
-        pendingSubmissions: stats.pending_submissions || 0
-      })
+      const stats = await apiService.getUserStats()
+      setImpactStats(stats)
     } catch (error) {
       console.error('Failed to load user stats:', error)
       // Fallback to mock data
       setImpactStats({
         totalSubmissions: 4,
         totalWeight: 4.5,
-        co2Reduced: '2.1kg',
+        co2Reduced: 2.1,
         pointsEarned: 250,
         pointsAvailable: 250,
         rank: "Eco Warrior",
         weeklyGoal: 10,
         weeklyProgress: 7,
         monthlyGoal: 40,
-        monthlyProgress: 28,
-        verifiedSubmissions: 3,
-        pendingSubmissions: 1
+        monthlyProgress: 28
       })
     } finally {
       setLoading(false)
@@ -517,8 +498,4 @@ export default function Profile() {
       )}
     </div>
   )
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 9368cd430b3b59cb1cb013e4824152f0e2f2bbe2
