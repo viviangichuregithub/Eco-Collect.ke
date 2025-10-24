@@ -26,7 +26,7 @@ export default function page() {
 
 				<button
 					className="logoutButton  bg-[#FCFEF7] rounded-[64px] mt-[10px]
-                w-[102px] h-[36px] text-black text-[16px] font-medium font-poppins align-center mr-4
+                w-[102px] h-[36px] text-black text-[16px] font-light font-poppins align-center mr-4
                 justify-center shadow-[rgba(0, 0, 0, 0.12) 0px 1px 3px, rgba(0, 0, 0, 0.24) 0px 1px 2px]"
 				>
 					Logout
