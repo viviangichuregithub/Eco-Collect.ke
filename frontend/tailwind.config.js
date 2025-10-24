@@ -6,11 +6,8 @@ export default {
     "./components/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    extend: {
-      fontFamily: {
-        poppins: ['Poppins', ...defaultTheme.fontFamily.sans],
-      },
-    },
-    plugins: [],
-  }
-}
+    extend: {},
+  },
+  plugins: [],
+};
+
