@@ -234,7 +234,7 @@ export default function Verification() {
 				{toShow.map((u) => (
 					<article
 						key={u.id}
-						className="bg-[#EEF6EE] border border-gray-200 rounded-2xl p-4 shadow-sm flex flex-col w-[340px] h-auto"
+						className="bg-[#ECF1E6] border border-gray-200 rounded-2xl p-4 shadow-sm flex flex-col w-[340] h-auto gap-24"
 						style={{ width: 340 }}
 					>
 						{/* Header */}
