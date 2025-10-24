@@ -51,11 +51,18 @@ export default function CivilianCenters() {
 
     try {
       const response = await apiService.getCollectionCenters()
-      setOriginalCenters(response.data || [])
-      setCollectionCenters(response.data || [])
+      const centersData = response?.data || response || []
+      
+      // Ensure all centers have required fields
+      const validCenters = Array.isArray(centersData) ? centersData.filter(center => 
+        center && typeof center === 'object' && center.name && center.id
+      ) : []
+      
+      setOriginalCenters(validCenters.length > 0 ? validCenters : mockCenters)
+      setCollectionCenters(validCenters.length > 0 ? validCenters : mockCenters)
     } catch (error) {
       console.error('Failed to load collection centers:', error)
-      setError('Failed to load collection centers. Please try again.')
+      setError('Using demo data - API connection failed')
       // Fallback to mock data for development
       setOriginalCenters(mockCenters)
       setCollectionCenters(mockCenters)
@@ -92,15 +99,26 @@ export default function CivilianCenters() {
   }
 
   const filterAndSortCenters = () => {
+    if (!Array.isArray(originalCenters)) {
+      setCollectionCenters([])
+      return
+    }
+    
     let filtered = [...originalCenters]
 
     // Apply search filter
     if (searchTerm) {
-      filtered = filtered.filter(center =>
-        center.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        center.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        center.address.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+      filtered = filtered.filter(center => {
+        if (!center) return false
+        const name = (center.name || '').toLowerCase()
+        const company = (center.company || '').toLowerCase()  
+        const address = (center.address || '').toLowerCase()
+        const search = searchTerm.toLowerCase()
+        
+        return name.includes(search) || 
+               company.includes(search) || 
+               address.includes(search)
+      })
     }
 
     // Apply filters
@@ -142,7 +160,9 @@ export default function CivilianCenters() {
     filtered.sort((a, b) => {
       switch (sortBy) {
         case 'name':
-          return a.name.localeCompare(b.name)
+          const nameA = (a?.name || '').toString()
+          const nameB = (b?.name || '').toString()
+          return nameA.localeCompare(nameB)
         case 'distance':
           if (!userLocation) return 0
           return (a.distance || 999) - (b.distance || 999)
