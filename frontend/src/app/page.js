@@ -120,6 +120,7 @@ A future where waste is viewed not as trash, but as opportunity.
 </section>
       <footer className="bg-[#355E62] text-white py-12 px-8">
   <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8 mb-8">
+    {/* Quick Links */}
     <div>
       <h3 className="font-bold mb-3">Quick Links</h3>
       <ul className="space-y-2">
@@ -128,6 +129,8 @@ A future where waste is viewed not as trash, but as opportunity.
         <li><a href="#services" className="hover:text-[#C8D8B4]">Services</a></li>
       </ul>
     </div>
+
+    {/* Socials */}
     <div>
       <h3 className="font-bold">Socials</h3>
       <ul className="space-y-2">
@@ -136,13 +139,17 @@ A future where waste is viewed not as trash, but as opportunity.
         <li><a href="#" className="hover:text-[#C8D8B4]">Instagram</a></li>
       </ul>
     </div>
+
+    {/* Contact */}
     <div>
       <h3 className="font-bold mb-3">Contact</h3>
       <p>Email: info@ecocollect.com</p>
       <p>Phone: +254 700 000 000</p>
     </div>
   </div>
-  <div className="border-t border-[#C8D8B4]/30 pt-4 text-center text-sm opacity-75">
+
+  {/* Divider */}
+  <div className="border-t border-white/30 pt-4 text-center text-sm opacity-75">
     <p>© {new Date().getFullYear()} Eco-Collect Kenya. All rights reserved.</p>
   </div>
 </footer>
