@@ -159,46 +159,26 @@ class ApiService {
         return this.request('/users/stats')
     }
 
-    // Waste submission endpoints
-    async submitWasteWithImage(file, submissionData) {
+    // Upload endpoints
+    async uploadWastePhoto(file) {
         const formData = new FormData()
-        formData.append('image', file)
+        formData.append('file', file)
         
-        // Add other form data
-        Object.keys(submissionData).forEach(key => {
-            if (submissionData[key] !== null && submissionData[key] !== undefined) {
-                formData.append(key, submissionData[key])
-            }
-        })
-        
-        return this.request('/api/submissions/submit', {
+        return this.request('/uploads/photo', {
             method: 'POST',
             headers: {}, // Remove Content-Type to let browser set it for FormData
             body: formData
         })
     }
 
-    // Legacy methods for backward compatibility - now use combined submission
-    async uploadWastePhoto(file) {
-        // This will be handled by submitWasteWithImage
-        return { file_id: 'temp_' + Date.now() }
-    }
-
     async classifyWaste(fileId) {
-        // Simulate AI classification for UI
-        const wasteTypes = ['Plastic', 'Glass', 'Metal', 'Paper', 'Electronic', 'Organic']
-        const randomType = wasteTypes[Math.floor(Math.random() * wasteTypes.length)]
-        const confidence = Math.random() * 0.4 + 0.6 // 0.6 to 1.0
-        
-        return {
-            waste_type: randomType,
-            confidence: confidence,
-            suggestions: [`This appears to be ${randomType.toLowerCase()} waste`]
-        }
+        return this.request(`/uploads/${fileId}/classify`, {
+            method: 'POST'
+        })
     }
 
     async submitWasteEntry(entryData) {
-        return this.request('/api/submissions', {
+        return this.request('/submissions', {
             method: 'POST',
             body: JSON.stringify(entryData)
         })
@@ -212,15 +192,11 @@ class ApiService {
             ...filters
         })
         
-        return this.request(`/api/submissions/history?${params}`)
+        return this.request(`/submissions/history?${params}`)
     }
 
     async getSubmissionById(id) {
-        return this.request(`/api/submissions/${id}`)
-    }
-
-    async getUserSubmissionStats() {
-        return this.request('/api/submissions/stats')
+        return this.request(`/submissions/${id}`)
     }
 
     async updateSubmissionStatus(id, status) {
@@ -233,15 +209,15 @@ class ApiService {
     // Collection Centers endpoints
     async getCollectionCenters(filters = {}) {
         const params = new URLSearchParams(filters)
-        return this.request(`/api/submissions/centers?${params}`)
+        return this.request(`/centers?${params}`)
     }
 
     async getCenterById(id) {
-        return this.request(`/api/submissions/centers/${id}`)
+        return this.request(`/centers/${id}`)
     }
 
     async searchCentersByLocation(latitude, longitude, radius = 10) {
-        return this.request(`/api/submissions/centers/nearby?lat=${latitude}&lng=${longitude}&radius=${radius}`)
+        return this.request(`/centers/nearby?lat=${latitude}&lng=${longitude}&radius=${radius}`)
     }
 
     // Analytics endpoints
