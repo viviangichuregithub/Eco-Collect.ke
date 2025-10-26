@@ -198,18 +198,18 @@ export default function Verification() {
 
 	// Info block with icon on top line and value below (two-line)
 	const InfoIconBlock = ({ Icon, value, ariaLabel }) => (
-		<div className="flex flex-col items-center text-center">
-			{/* icon as top line; include aria-label for screen readers */}
-			<div aria-hidden className="mb-2  text-gray-600">
-				<Icon />
+		<div
+			role="group"
+			aria-label={ariaLabel}
+			className="flex items-center gap-3"
+		>
+			<div aria-hidden className="text-gray-600">
+				{typeof Icon === "function" ? <Icon /> : Icon}
 			</div>
-			{/* value below */}
 			<div className="text-sm text-gray-800">{value}</div>
-			{/* visually-hidden accessible label for screen readers */}
-			<span className="sr-only" aria-label={ariaLabel}></span>
+			<span className="sr-only">{ariaLabel}</span>
 		</div>
 	);
-
 	const BUTTON_FIXED =
 		"w-[72.15px] h-[21.59px] flex items-center justify-center text-xs rounded-full text-white";
 
@@ -257,8 +257,8 @@ export default function Verification() {
 						</div>
 
 						{/* Info row: icons on top of values; arranged horizontally */}
-						<div className="mt-2 flex-1 flex flex-col justify-between">
-							<div className="flex-row justify-start items-start gap-4">
+						<div className="mt-2 flex-1 flex flex-col justify-between ">
+							<div className="flex flex-col justify-start items-start gap-4">
 								<InfoIconBlock
 									Icon={() => <IconUser className="text-gray-600 " />}
 									value={u.user_name}
