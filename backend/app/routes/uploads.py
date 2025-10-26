@@ -27,9 +27,14 @@ def allowed_file(filename):
 def upload_photo():
     """Upload waste photo"""
     try:
+        # Debug logging
+        print(f"DEBUG: Request files: {request.files}")
+        print(f"DEBUG: Request form: {request.form}")
+        print(f"DEBUG: Request content type: {request.content_type}")
+        
         # Check if file is present in request
         if 'file' not in request.files:
-            return jsonify({'error': 'No file provided'}), 400
+            return jsonify({'error': 'No file provided', 'debug': {'files': list(request.files.keys())}}), 400
         
         file = request.files['file']
         

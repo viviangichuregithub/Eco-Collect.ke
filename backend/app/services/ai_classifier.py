@@ -19,11 +19,7 @@ class WasteClassifier:
         'plastic': {'points': 10, 'description': 'Plastic waste (bottles, containers, packaging)'},
         'paper': {'points': 8, 'description': 'Paper and cardboard waste'},
         'glass': {'points': 12, 'description': 'Glass bottles and containers'},
-        'metal': {'points': 15, 'description': 'Metal cans and containers'},
-        'organic': {'points': 5, 'description': 'Organic/biodegradable waste'},
-        'e-waste': {'points': 20, 'description': 'Electronic waste (batteries, devices)'},
-        'mixed': {'points': 3, 'description': 'Mixed recyclable waste'},
-        'non-recyclable': {'points': 0, 'description': 'Non-recyclable waste'}
+        'metal': {'points': 15, 'description': 'Metal cans and containers'}
     }
     
     def __init__(self, model_path=None):
@@ -101,7 +97,7 @@ class WasteClassifier:
     def analyze_image_features(self, image_path: str) -> Dict[str, Any]:
         """
         Analyze image features when no model is available
-        Uses heuristics based on color analysis and basic image processing
+        Uses advanced heuristics based on color analysis, texture, and brightness
         
         Args:
             image_path: Path to image file
@@ -116,31 +112,112 @@ class WasteClassifier:
         # Analyze dominant colors
         pixels = img_array.reshape(-1, 3)
         avg_color = np.mean(pixels, axis=0)
+        std_color = np.std(pixels, axis=0)
         
-        # Simple heuristic-based classification
-        # This is a fallback when no ML model is available
         r, g, b = avg_color
+        r_std, g_std, b_std = std_color
         
-        # Color-based heuristics (simplified)
-        if r > 150 and g < 100 and b < 100:
-            # Reddish - might be plastic or metal
-            waste_type = 'plastic'
-            confidence = 75
-        elif g > 150 and r < 120 and b < 120:
-            # Greenish - might be glass or organic
-            waste_type = 'glass'
-            confidence = 70
-        elif r > 200 and g > 200 and b > 200:
-            # Whitish - might be paper
-            waste_type = 'paper'
-            confidence = 72
-        elif r < 80 and g < 80 and b < 80:
-            # Darkish - might be metal or e-waste
-            waste_type = 'metal'
-            confidence = 68
-        else:
-            # Default to mixed recyclable
-            waste_type = 'mixed'
+        # Calculate brightness and saturation
+        brightness = (r + g + b) / 3
+        saturation = np.max(std_color)
+        color_variance = np.mean(std_color)
+        
+        # Calculate color ratios for better classification
+        total = r + g + b + 1  # Avoid division by zero
+        r_ratio = r / total
+        g_ratio = g / total
+        b_ratio = b / total
+        
+        # Score each waste type with REALISTIC conditions for actual photos
+        scores = {}
+        
+        # PLASTIC (colorful, bright, or translucent bottles/containers)
+        plastic_score = 0
+        # Bright colored plastics
+        if brightness > 120 and saturation > 30:
+            plastic_score += 50
+        # Blue plastics (water bottles)
+        if b > r and b > g and b_ratio > 0.34:
+            plastic_score += 55
+        # Red/pink plastics
+        if r > g and r > b and r_ratio > 0.35 and brightness > 100:
+            plastic_score += 50
+        # Green/yellow plastics
+        if g > r and g > b and g_ratio > 0.34 and brightness > 100:
+            plastic_score += 45
+        # Clear/translucent plastics
+        if brightness > 160 and saturation < 50:
+            plastic_score += 40
+        # Medium brightness, balanced colors (common plastics)
+        if 100 < brightness < 180 and 20 < saturation < 80:
+            if color_variance > 20:
+                plastic_score += 30
+        scores['plastic'] = plastic_score
+        
+        # PAPER (beige/tan/brown cardboard, white paper)
+        paper_score = 0
+        # Brown cardboard (most common)
+        if r > g > b and 90 < brightness < 210:
+            if (r - b) < 80 and 15 < saturation < 70:
+                paper_score += 70
+        # White/light paper
+        if brightness > 170 and saturation < 40:
+            paper_score += 60
+        # Tan/beige tones
+        if 0.32 < r_ratio < 0.39 and 0.29 < g_ratio < 0.37 and brightness > 100:
+            paper_score += 45
+        scores['paper'] = paper_score
+        
+        # GLASS (green/brown/clear bottles)
+        glass_score = 0
+        # Green glass (beer, wine bottles)
+        if g > r and g > b and g_ratio > 0.34:
+            if 60 < brightness < 190:
+                glass_score += 80
+        # Brown glass
+        if r > g > b and g_ratio > 0.26 and 40 < brightness < 160:
+            if saturation > 15:
+                glass_score += 75
+        # Clear glass
+        if brightness > 150 and saturation < 45 and color_variance < 35:
+            glass_score += 50
+        # Medium dark with some color
+        if 70 < brightness < 140 and saturation > 20:
+            glass_score += 35
+        scores['glass'] = glass_score
+        
+        # METAL (gray/silver cans - RELAXED saturation for real photos)
+        metal_score = 0
+        # Gray metal (cans, foil)
+        if 80 < brightness < 200 and saturation < 80:
+            if abs(r - g) < 30 and abs(g - b) < 30:  # Relatively uniform
+                metal_score += 70
+        # Shiny/reflective metal
+        if brightness > 130 and saturation < 70 and color_variance < 40:
+            metal_score += 55
+        # Medium gray tones
+        if 100 < brightness < 180 and saturation < 85:
+            if abs(r_ratio - g_ratio) < 0.05:  # Balanced RGB
+                metal_score += 45
+        scores['metal'] = metal_score
+        
+        # Get the waste type with highest score
+        waste_type = max(scores, key=scores.get)
+        max_score = scores[waste_type]
+        
+        # Debug logging - print all scores
+        print(f"\n🔍 Image Analysis for: {image_path}")
+        print(f"   Brightness: {int(brightness)}, Saturation: {int(saturation)}, Color Variance: {int(color_variance)}")
+        print(f"   RGB: ({int(r)}, {int(g)}, {int(b)})")
+        print(f"   Scores: {json.dumps(scores, indent=2)}")
+        print(f"   Winner: {waste_type} ({max_score} points)\n")
+        
+        # Convert score to confidence (0-100)
+        confidence = min(int(max_score), 95)
+        
+        # If confidence is too low, default to mixed
+        if confidence < 40:
+            waste_type = 'Mixed'
             confidence = 60
         
         return {
@@ -148,7 +225,12 @@ class WasteClassifier:
             'confidence': confidence,
             'points': self.WASTE_CATEGORIES[waste_type]['points'],
             'description': self.WASTE_CATEGORIES[waste_type]['description'],
-            'avg_color': [int(r), int(g), int(b)]
+            'avg_color': [int(r), int(g), int(b)],
+            'analysis': {
+                'brightness': int(brightness),
+                'saturation': int(saturation),
+                'color_variance': int(color_variance)
+            }
         }
     
     def classify_with_model(self, image_path: str) -> Dict[str, Any]:
@@ -198,12 +280,16 @@ class WasteClassifier:
                 - description: waste description
         """
         try:
-            if self.model is not None:
-                # Use trained model
-                result = self.classify_with_model(image_path)
-            else:
-                # Use heuristic-based analysis
-                result = self.analyze_image_features(image_path)
+            # ALWAYS use heuristic-based analysis for now
+            # The trained model uses synthetic data and doesn't work well with real photos
+            # TODO: Train model with real labeled waste images for better accuracy
+            result = self.analyze_image_features(image_path)
+            
+            # Commented out model-based classification until we have real training data
+            # if self.model is not None:
+            #     result = self.classify_with_model(image_path)
+            # else:
+            #     result = self.analyze_image_features(image_path)
             
             # Add metadata
             result['timestamp'] = tf.timestamp().numpy() if hasattr(tf, 'timestamp') else 0

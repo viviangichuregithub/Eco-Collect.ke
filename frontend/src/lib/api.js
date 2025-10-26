@@ -1,5 +1,5 @@
 // API Service Layer for Eco-Collect Kenya
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
 const IS_DEVELOPMENT = process.env.NODE_ENV === 'development'
 
 class ApiService {
@@ -44,17 +44,37 @@ class ApiService {
     // Generic request method
     async request(endpoint, options = {}) {
         const url = `${this.baseURL}${endpoint}`
+        
+        // Build config first, then handle headers
         const config = {
-            headers: {
-                'Content-Type': 'application/json',
-                ...options.headers,
-            },
             ...options,
+        }
+        
+        // Build headers - don't set Content-Type for FormData
+        config.headers = {
+            ...options.headers,
+        }
+        
+        // Only set Content-Type for non-FormData requests
+        if (!(options.body instanceof FormData)) {
+            config.headers['Content-Type'] = 'application/json'
+        } else {
+            // Explicitly delete Content-Type for FormData (let browser set it)
+            delete config.headers['Content-Type']
         }
 
         // Add auth token if available
         if (this.token) {
             config.headers.Authorization = `Bearer ${this.token}`
+        }
+
+        // Debug logging for file uploads
+        if (options.body instanceof FormData) {
+            console.log('📨 FormData request:', {
+                url,
+                headers: config.headers,
+                method: config.method || 'GET'
+            })
         }
 
         try {
@@ -70,7 +90,16 @@ class ApiService {
             }
 
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`)
+                // Try to get error details from response body
+                let errorDetails = `HTTP error! status: ${response.status}`
+                try {
+                    const errorBody = await response.json()
+                    errorDetails += ` - ${errorBody.error || JSON.stringify(errorBody)}`
+                    console.error('API Error Details:', errorBody)
+                } catch (e) {
+                    // Response body not JSON
+                }
+                throw new Error(errorDetails)
             }
 
             const contentType = response.headers.get('content-type')
@@ -164,9 +193,15 @@ class ApiService {
         const formData = new FormData()
         formData.append('file', file)
         
+        console.log('📤 Uploading file:', {
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            formData: formData.get('file')
+        })
+        
         return this.request('/uploads/photo', {
             method: 'POST',
-            headers: {}, // Remove Content-Type to let browser set it for FormData
             body: formData
         })
     }

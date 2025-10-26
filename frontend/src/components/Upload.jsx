@@ -4,6 +4,7 @@ import apiService from '../lib/api'
 
 export default function Upload() {
     const [selectedFile, setSelectedFile] = useState(null)
+    const [previewUrl, setPreviewUrl] = useState(null)
     const [uploadedFileId, setUploadedFileId] = useState(null)
     const [showLoadingModal, setShowLoadingModal] = useState(false)
     const [showFormModal, setShowFormModal] = useState(false)
@@ -125,11 +126,8 @@ export default function Upload() {
 
                 canvas.toBlob((blob) => {
                     const file = new File([blob], 'captured_photo.jpg', { type: 'image/jpeg' })
-                    const fileWithUrl = {
-                        ...file,
-                        url: URL.createObjectURL(file)
-                    }
-                    handleFileSelect(fileWithUrl)
+                    setPreviewUrl(URL.createObjectURL(file))
+                    handleFileSelect(file)  // Send the actual File object
                 }, 'image/jpeg', 0.8)
 
                 // Stop camera
@@ -145,11 +143,9 @@ export default function Upload() {
     const handleFileUpload = (event) => {
         const file = event.target.files[0]
         if (file) {
-            const fileWithUrl = {
-                ...file,
-                url: URL.createObjectURL(file)
-            }
-            handleFileSelect(fileWithUrl)
+            // Store preview URL separately, don't modify the File object
+            setPreviewUrl(URL.createObjectURL(file))
+            handleFileSelect(file)  // Send the actual File object
         }
     }
 
@@ -226,6 +222,7 @@ export default function Upload() {
         setShowFormModal(false)
         setShowLoadingModal(false)
         setSelectedFile(null)
+        setPreviewUrl(null)  // Clear preview URL
         setUploadedFileId(null)
         setAiClassification(null)
         setError(null)
@@ -276,10 +273,10 @@ export default function Upload() {
                         </div>
                         
                         {/* Waste Image Preview */}
-                        {selectedFile?.url && (
+                        {previewUrl && (
                             <div className='w-24 h-24 mx-auto mb-4 rounded-lg overflow-hidden border-2 border-gray-200'>
                                 <img 
-                                    src={selectedFile.url} 
+                                    src={previewUrl} 
                                     alt="Analyzing waste" 
                                     className='w-full h-full object-cover'
                                 />
@@ -305,9 +302,9 @@ export default function Upload() {
                         <div className='border rounded-lg p-4'>
                             <label className='block text-sm font-medium mb-2'>Waste Photo</label>
                             <div className='w-full h-32 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden'>
-                                {selectedFile?.url ? (
+                                {previewUrl ? (
                                     <img 
-                                        src={selectedFile.url} 
+                                        src={previewUrl} 
                                         alt="Waste photo" 
                                         className='w-full h-full object-cover'
                                     />
