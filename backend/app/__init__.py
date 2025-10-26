@@ -32,7 +32,8 @@ def create_app(config_class=DevelopmentConfig):
     app.register_blueprint(auth_bp, url_prefix="/auth")
 
     from app.models import user  # ensure models are loaded
-
+    from app.routes.centers import centers_bp
+    app.register_blueprint(centers_bp, url_prefix="/api/centres")
 
     os.makedirs(app.config["SESSION_FILE_DIR"], exist_ok=True)
 
