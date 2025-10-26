@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import apiService from '../lib/api';
 
 export default function SignUp() {
   const [formData, setFormData] = useState({
@@ -15,6 +16,7 @@ export default function SignUp() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [apiError, setApiError] = useState('');
   const router = useRouter();
 
   const handleInputChange = (e) => {
@@ -76,19 +78,38 @@ export default function SignUp() {
     }
 
     setIsLoading(true);
+    setApiError('');
 
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Prepare data for backend API
+      const userData = {
+        user_name: `${formData.firstName} ${formData.lastName}`,
+        email: formData.email,
+        password: formData.password,
+        role: formData.userType,
+        phone: formData.phone,
+        terms_approved: true
+      };
+
+      // Call actual backend API
+      const response = await apiService.register(userData);
       
-      // For demo purposes, redirect based on user type
-      if (formData.userType === 'civilian') {
-        router.push('/civilian');
-      } else {
-        router.push('/corporative');
+      if (response.user) {
+        // Store user info in localStorage
+        localStorage.setItem('user', JSON.stringify(response.user));
+        
+        // Redirect based on user role
+        if (response.user.role === 'civilian') {
+          router.push('/civilian');
+        } else if (response.user.role === 'corporative') {
+          router.push('/corporative');
+        } else {
+          router.push('/civilian'); // default fallback
+        }
       }
     } catch (error) {
       console.error('SignUp error:', error);
+      setApiError(error.message || 'Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -96,6 +117,13 @@ export default function SignUp() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* API Error Message */}
+      {apiError && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+          {apiError}
+        </div>
+      )}
+
       {/* User Type Selection */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">

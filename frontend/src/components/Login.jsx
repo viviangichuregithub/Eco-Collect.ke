@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import apiService from '../lib/api';
 
 export default function Login() {
   const [formData, setFormData] = useState({
@@ -10,6 +11,7 @@ export default function Login() {
     userType: 'civilian'
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const router = useRouter();
 
   const handleInputChange = (e) => {
@@ -23,19 +25,28 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+    setError('');
 
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Call actual backend API
+      const response = await apiService.login(formData.email, formData.password);
       
-      // For demo purposes, redirect based on user type
-      if (formData.userType === 'civilian') {
-        router.push('/civilian');
-      } else {
-        router.push('/corporative');
+      if (response.user) {
+        // Store user info in localStorage
+        localStorage.setItem('user', JSON.stringify(response.user));
+        
+        // Redirect based on user role from backend
+        if (response.user.role === 'civilian') {
+          router.push('/civilian');
+        } else if (response.user.role === 'corporative') {
+          router.push('/corporative');
+        } else {
+          router.push('/civilian'); // default fallback
+        }
       }
     } catch (error) {
       console.error('Login error:', error);
+      setError(error.message || 'Login failed. Please check your credentials.');
     } finally {
       setIsLoading(false);
     }
@@ -43,6 +54,13 @@ export default function Login() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Error Message */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+          {error}
+        </div>
+      )}
+
       {/* User Type Selection */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">

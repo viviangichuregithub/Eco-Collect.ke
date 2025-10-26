@@ -45,11 +45,20 @@ export default function History() {
         queryFilters
       )
 
-      setSubmissionHistory(response.data || [])
+      // Backend returns { submissions: [...], total, page, limit, pages }
+      const submissionsWithImages = (response.submissions || []).map(submission => ({
+        ...submission,
+        // Construct image URL from file_id if available
+        photo: submission.file_id 
+          ? `${apiService.baseURL.replace('/api', '')}/uploads/${submission.file_id}.jpg`
+          : '/api/placeholder/80/60'
+      }))
+
+      setSubmissionHistory(submissionsWithImages)
       setPagination(prev => ({
         ...prev,
         total: response.total || 0,
-        totalPages: Math.ceil((response.total || 0) / prev.limit)
+        totalPages: response.pages || Math.ceil((response.total || 0) / prev.limit)
       }))
     } catch (error) {
       console.error('Failed to load submission history:', error)
@@ -335,24 +344,20 @@ export default function History() {
               {/* Photo */}
               <div className='flex items-center'>
                 <div className='w-16 h-12 bg-gray-200 rounded-lg overflow-hidden flex items-center justify-center'>
-                  {submission.type === 'Plastic' && (
-                    <div className='w-full h-full bg-blue-100 flex items-center justify-center'>
-                      <span className='text-xs text-blue-600'>Plastic</span>
-                    </div>
-                  )}
-                  {submission.type === 'Glass' && (
-                    <div className='w-full h-full bg-green-100 flex items-center justify-center'>
-                      <span className='text-xs text-green-600'>Glass</span>
-                    </div>
-                  )}
-                  {submission.type === 'Metal' && (
-                    <div className='w-full h-full bg-gray-100 flex items-center justify-center'>
-                      <span className='text-xs text-gray-600'>Metal</span>
-                    </div>
-                  )}
-                  {submission.type === 'Wood/Paper' && (
-                    <div className='w-full h-full bg-amber-100 flex items-center justify-center'>
-                      <span className='text-xs text-amber-600'>Paper</span>
+                  {submission.photo && submission.photo !== '/api/placeholder/80/60' ? (
+                    <img 
+                      src={submission.photo} 
+                      alt={`${submission.type} waste`}
+                      className='w-full h-full object-cover'
+                      onError={(e) => {
+                        // Fallback to colored placeholder if image fails to load
+                        e.target.style.display = 'none'
+                        e.target.parentElement.innerHTML = `<div class='w-full h-full ${getTypeColor(submission.type)} flex items-center justify-center'><span class='text-xs text-white'>${submission.type}</span></div>`
+                      }}
+                    />
+                  ) : (
+                    <div className={`w-full h-full ${getTypeColor(submission.type)} flex items-center justify-center`}>
+                      <span className='text-xs text-white'>{submission.type}</span>
                     </div>
                   )}
                 </div>

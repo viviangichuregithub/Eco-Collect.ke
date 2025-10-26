@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, send_from_directory
 from app.config import DevelopmentConfig
 from app.extensions import db, bcrypt, migrate, cors
 from flask_session import Session
@@ -34,7 +34,20 @@ def create_app(config_class=DevelopmentConfig):
     from app.routes.uploads import uploads_bp
     app.register_blueprint(uploads_bp, url_prefix="/api/uploads")
 
-    from app.models import user  # ensure models are loaded
+    from app.routes.submissions import submissions_bp
+    app.register_blueprint(submissions_bp, url_prefix="/api/submissions")
+
+    from app.routes.centers import centers_bp
+    app.register_blueprint(centers_bp, url_prefix="/api/centers")
+
+    # Import models to ensure they are loaded for migrations
+    from app.models import user, uploads  # ensure all models are loaded
+
+    # Serve uploaded images
+    @app.route('/uploads/<filename>')
+    def uploaded_file(filename):
+        uploads_dir = os.path.join(os.path.dirname(__file__), '..', 'uploads')
+        return send_from_directory(uploads_dir, filename)
 
     # Add a simple index route to show available endpoints
     @app.route('/')
@@ -46,6 +59,9 @@ def create_app(config_class=DevelopmentConfig):
             'endpoints': {
                 'auth': '/auth',
                 'uploads': '/api/uploads',
+                'submissions': '/api/submissions',
+                'centers': '/api/centers',
+                'static_uploads': '/uploads/<filename>',
                 'health': '/health'
             },
             'documentation': 'See AI_CLASSIFICATION_README.md'

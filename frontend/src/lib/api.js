@@ -47,6 +47,7 @@ class ApiService {
         
         // Build config first, then handle headers
         const config = {
+            credentials: 'include', // Always include credentials for session-based auth
             ...options,
         }
         
@@ -63,7 +64,7 @@ class ApiService {
             delete config.headers['Content-Type']
         }
 
-        // Add auth token if available
+        // Add auth token if available (for token-based endpoints)
         if (this.token) {
             config.headers.Authorization = `Bearer ${this.token}`
         }
@@ -78,7 +79,15 @@ class ApiService {
         }
 
         try {
+            // Add timeout to prevent long hangs (5 seconds for regular requests)
+            const timeout = options.timeout || 5000
+            const controller = new AbortController()
+            const timeoutId = setTimeout(() => controller.abort(), timeout)
+            
+            config.signal = controller.signal
+            
             const response = await fetch(url, config)
+            clearTimeout(timeoutId)
             
             // Handle token refresh if needed
             if (response.status === 401 && this.refreshToken) {
@@ -110,9 +119,12 @@ class ApiService {
         } catch (error) {
             console.error('API Request failed:', error)
             
-            // In development mode, enable fallback data for connection failures
-            if (error.message.includes('Failed to fetch') || error.message.includes('CONNECTION_REFUSED') || error.name === 'TypeError') {
-                console.warn(`🔄 API connection failed. Using fallback data for ${endpoint}`)
+            // In development mode, enable fallback data for connection failures or timeouts
+            if (error.message.includes('Failed to fetch') || 
+                error.message.includes('CONNECTION_REFUSED') || 
+                error.name === 'TypeError' || 
+                error.name === 'AbortError') {
+                console.warn(`🔄 API connection failed/timeout. Using fallback data for ${endpoint}`)
                 this.useFallbackData = true
                 return this.getFallbackData(endpoint, options.method || 'GET')
             }
@@ -148,27 +160,34 @@ class ApiService {
     async login(email, password) {
         const response = await this.request('/auth/login', {
             method: 'POST',
-            body: JSON.stringify({ email, password })
+            body: JSON.stringify({ email, password }),
+            credentials: 'include' // Important for session cookies
         })
         
-        if (response.access_token) {
-            this.setTokens(response.access_token, response.refresh_token)
-        }
+        // Session-based auth - no tokens to store
+        // User info is returned in response.user
         return response
     }
 
     async register(userData) {
         return this.request('/auth/register', {
             method: 'POST',
-            body: JSON.stringify(userData)
+            body: JSON.stringify(userData),
+            credentials: 'include' // Important for session cookies
         })
     }
 
     async logout() {
         try {
-            await this.request('/auth/logout', { method: 'POST' })
+            await this.request('/auth/logout', { 
+                method: 'POST',
+                credentials: 'include'
+            })
         } finally {
-            this.clearTokens()
+            // Clear any client-side stored user data
+            if (typeof window !== 'undefined') {
+                localStorage.removeItem('user')
+            }
         }
     }
 
@@ -221,10 +240,18 @@ class ApiService {
 
     // History endpoints
     async getSubmissionHistory(page = 1, limit = 10, filters = {}) {
+        // Clean filters - remove undefined/null values
+        const cleanFilters = Object.entries(filters).reduce((acc, [key, value]) => {
+            if (value !== undefined && value !== null && value !== 'undefined') {
+                acc[key] = value
+            }
+            return acc
+        }, {})
+        
         const params = new URLSearchParams({
             page: page.toString(),
             limit: limit.toString(),
-            ...filters
+            ...cleanFilters
         })
         
         return this.request(`/submissions/history?${params}`)
@@ -243,8 +270,17 @@ class ApiService {
 
     // Collection Centers endpoints
     async getCollectionCenters(filters = {}) {
-        const params = new URLSearchParams(filters)
-        return this.request(`/centers?${params}`)
+        // Remove undefined/null values from filters
+        const cleanFilters = Object.entries(filters).reduce((acc, [key, value]) => {
+            if (value !== undefined && value !== null && value !== 'undefined') {
+                acc[key] = value
+            }
+            return acc
+        }, {})
+        
+        const params = new URLSearchParams(cleanFilters)
+        const queryString = params.toString()
+        return this.request(`/centers${queryString ? '?' + queryString : ''}`)
     }
 
     async getCenterById(id) {
@@ -364,34 +400,45 @@ class ApiService {
 
             // Collection centers
             '/centers': {
-                data: [
+                centers: [
                     {
                         id: 1,
-                        name: 'Coca-Cola Kilimani Hub',
-                        address: 'Argwings Kodhek Rd, Nairobi',
-                        latitude: -1.2921,
-                        longitude: 36.8219,
-                        phone: '+254700123456',
-                        email: 'kilimani@cocacola.co.ke',
-                        hours: 'Mon-Fri: 8AM-5PM, Sat: 9AM-2PM',
-                        acceptedTypes: ['Plastic', 'Glass', 'Metal'],
-                        rating: 4.8,
-                        isOpen: true
+                        name: 'Nairobi Central Collection Center',
+                        address: 'Haile Selassie Avenue, Nairobi',
+                        latitude: -1.2864,
+                        longitude: 36.8172,
+                        phone: '+254700000001',
+                        email: 'central@ecocollect.ke',
+                        operating_hours: 'Mon-Fri: 8AM-6PM, Sat: 9AM-4PM',
+                        accepted_types: ['Plastic', 'Paper', 'Glass', 'Metal'],
+                        is_active: true
                     },
                     {
                         id: 2,
-                        name: 'Green Cycle Center',
-                        address: 'Moi Avenue, Nairobi CBD',
-                        latitude: -1.2841,
-                        longitude: 36.8155,
-                        phone: '+254722987654',
-                        email: 'info@greencycle.co.ke',
-                        hours: 'Mon-Sat: 7AM-6PM',
-                        acceptedTypes: ['Electronic', 'Metal', 'Plastic'],
-                        rating: 4.6,
-                        isOpen: true
+                        name: 'Westlands Eco Hub',
+                        address: 'Peponi Road, Westlands',
+                        latitude: -1.2676,
+                        longitude: 36.8078,
+                        phone: '+254700000002',
+                        email: 'westlands@ecocollect.ke',
+                        operating_hours: 'Mon-Sat: 7AM-7PM',
+                        accepted_types: ['Electronic', 'Metal', 'Plastic', 'Paper'],
+                        is_active: true
+                    },
+                    {
+                        id: 3,
+                        name: 'Karen Green Center',
+                        address: 'Karen Road, Karen',
+                        latitude: -1.3197,
+                        longitude: 36.7078,
+                        phone: '+254700000003',
+                        email: 'karen@ecocollect.ke',
+                        operating_hours: 'Mon-Fri: 8AM-5PM',
+                        accepted_types: ['Organic', 'Plastic', 'Paper'],
+                        is_active: true
                     }
-                ]
+                ],
+                total: 3
             },
 
             // Upload photo response

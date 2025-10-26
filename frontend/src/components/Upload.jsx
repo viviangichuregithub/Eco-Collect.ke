@@ -34,8 +34,9 @@ export default function Upload() {
 
     const loadCollectionCenters = async () => {
         try {
-            const centers = await apiService.getCollectionCenters()
-            setCollectionCenters(centers.data || [])
+            const response = await apiService.getCollectionCenters()
+            // Backend returns { centers: [...], total: N }
+            setCollectionCenters(response.centers || [])
         } catch (error) {
             console.error('Failed to load collection centers:', error)
             setError('Failed to load collection centers')
@@ -183,10 +184,12 @@ export default function Upload() {
                 file_id: uploadedFileId,
                 classification: aiClassification,
                 weight: parseFloat(formData.weight),
-                collection_center_id: formData.collectionCenter,
+                collection_center_id: parseInt(formData.collectionCenter, 10),
                 notes: formData.notes || null,
                 location: await getCurrentLocation() // Optional geolocation
             }
+
+            console.log('Submitting data:', submissionData)
 
             const response = await apiService.submitWasteEntry(submissionData)
             
