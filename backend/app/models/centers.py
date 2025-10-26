@@ -23,7 +23,7 @@ class centers(db.Model):
     location = db.Column(db.String(255), nullable=False)
     location_url = db.Column(db.String(500), nullable=True)
     created_by = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.timezone.utc, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     total_waste_collected = db.Column(db.Integer, default=0, nullable=False)
     time_open = db.Column(db.String(255), nullable=True)
     contact = db.Column(db.String(50), nullable=True)

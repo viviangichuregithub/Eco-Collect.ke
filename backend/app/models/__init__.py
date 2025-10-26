@@ -1,4 +1,4 @@
 from app.extensions import db
 from app.models.user import User
-
-__all__ = ["db", "User"]
+from app.models.centers import centers as centers
+__all__ = ["db", "User", "centers"]
