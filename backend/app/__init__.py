@@ -31,8 +31,29 @@ def create_app(config_class=DevelopmentConfig):
     from app.routes.auth import auth_bp
     app.register_blueprint(auth_bp, url_prefix="/auth")
 
+    from app.routes.uploads import uploads_bp
+    app.register_blueprint(uploads_bp, url_prefix="/api/uploads")
+
     from app.models import user  # ensure models are loaded
 
+    # Add a simple index route to show available endpoints
+    @app.route('/')
+    def index():
+        return {
+            'message': 'Eco-Collect.ke API',
+            'version': '1.0.0',
+            'status': 'running',
+            'endpoints': {
+                'auth': '/auth',
+                'uploads': '/api/uploads',
+                'health': '/health'
+            },
+            'documentation': 'See AI_CLASSIFICATION_README.md'
+        }
+    
+    @app.route('/health')
+    def health():
+        return {'status': 'healthy', 'service': 'eco-collect-api'}
 
     os.makedirs(app.config["SESSION_FILE_DIR"], exist_ok=True)
 

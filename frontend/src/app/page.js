@@ -38,7 +38,7 @@ export default function HomePage() {
     className="relative z-10 bg-black/30 backdrop-blur-md p-8 text-center text-white max-w-4xl rounded-lg"
   >
     <h1 className="text-3xl md:text-3xl font-bold mb-4">
-      "Building a Cleaner Future, One Collection at a Time."
+      Building a Cleaner Future, One Collection at a Time.
     </h1>
 
     <p className="text-sm md:text-sm mb-6">
