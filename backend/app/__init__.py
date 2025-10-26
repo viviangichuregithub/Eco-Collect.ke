@@ -31,7 +31,7 @@ def create_app():
     )
 
     os.makedirs(app.config["SESSION_FILE_DIR"], exist_ok=True)
-    Session(app)  # initialize session
+    Session(app)
 
     # ----------------------------------
     # EXTENSIONS INITIALIZATION
@@ -61,20 +61,38 @@ def create_app():
     # ----------------------------------
     from app.routes.auth import auth_bp
     from app.routes.profile import profile_bp
+    from app.routes.uploads import uploads_bp
 
     app.register_blueprint(auth_bp, url_prefix="/auth")
     app.register_blueprint(profile_bp, url_prefix="/profile")
+    app.register_blueprint(uploads_bp, url_prefix="/api/uploads")
 
     # ----------------------------------
     # MODELS IMPORT
     # ----------------------------------
-    from app.models import user  # noqa: F401 (ensure model registration)
+    from app.models import user  # noqa: F401
 
     # ----------------------------------
-    # SIMPLE HEALTH CHECK
+    # SIMPLE ROUTES / HEALTH CHECK
     # ----------------------------------
     @app.route("/")
-    def home():
-        return {"message": "EcoCollect API running", "env": env}, 200
+    def index():
+        return {
+            "message": "Eco-Collect.ke API",
+            "version": "1.0.0",
+            "status": "running",
+            "env": env,
+            "endpoints": {
+                "auth": "/auth",
+                "profile": "/profile",
+                "uploads": "/api/uploads",
+                "health": "/health",
+            },
+            "documentation": "See AI_CLASSIFICATION_README.md",
+        }
+
+    @app.route("/health")
+    def health():
+        return {"status": "healthy", "service": "eco-collect-api"}
 
     return app
