@@ -1,32 +1,16 @@
-import React, { useState } from "react";
+// frontend/src/components/CorporativeCenters.jsx
+import React, { useEffect, useState } from "react";
+import {
+	listCenters,
+	createCenter,
+	updateCenter,
+	deleteCenter,
+} from "../lib/centers"; // adjust path if needed
 
-export default function CorporativeCenters() {
-	const [collectionCenters, setCollectionCenters] = useState([
-		{
-			id: 1,
-			name: "Safaricom E-Waste CBD",
-			company: "Safaricom PLC",
-			address: "Kenyatta Ave, Nairobi CBD",
-			phone: "+254 722 000 000",
-			hours: "Mon - Fri: 8:00 AM - 5:00 PM",
-		},
-		{
-			id: 2,
-			name: "Safaricom E-Waste CBD",
-			company: "Safaricom PLC",
-			address: "Kenyatta Ave, Nairobi CBD",
-			phone: "+254 722 000 000",
-			hours: "Mon - Fri: 8:00 AM - 5:00 PM",
-		},
-		{
-			id: 3,
-			name: "Safaricom E-Waste CBD",
-			company: "Safaricom PLC",
-			address: "Kenyatta Ave, Nairobi CBD",
-			phone: "+254 722 000 000",
-			hours: "Mon - Fri: 8:00 AM - 5:00 PM",
-		},
-	]);
+export default function CorporativeCenters({ currentUserId = 1 }) {
+	const [collectionCenters, setCollectionCenters] = useState([]);
+	const [loading, setLoading] = useState(false);
+	const [error, setError] = useState(null);
 
 	// UI state
 	const [isAdding, setIsAdding] = useState(false);
@@ -44,6 +28,35 @@ export default function CorporativeCenters() {
 	const BUTTON_STYLE =
 		"w-[132px] h-[32px] bg-[#355E62] rounded-[64px] text-[#ffff] hover:cursor-pointer font-poppins text-[14px] font-light";
 
+	useEffect(() => {
+		fetchCenters();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
+	const fetchCenters = async () => {
+		setLoading(true);
+		setError(null);
+		try {
+			const data = await listCenters();
+			// normalize backend shape to frontend (we expect fields id, name, company, address, phone, hours)
+			const normalized = (data || []).map((c) => ({
+				id: c.id,
+				name: c.location_name || c.location || "", // prefer explicit name, fallback to location
+				company: c.company || "",
+				address: c.location || "",
+				phone: c.contact || "",
+				hours: c.time_open || "",
+				raw: c,
+			}));
+			setCollectionCenters(normalized);
+		} catch (err) {
+			console.error("Failed to load centers", err);
+			setError("Failed to load centers");
+		} finally {
+			setLoading(false);
+		}
+	};
+
 	const handleChange = (e) => {
 		const { name, value } = e.target;
 		setForm((p) => ({ ...p, [name]: value }));
@@ -59,15 +72,43 @@ export default function CorporativeCenters() {
 		setIsAdding(false);
 		setForm({ name: "", company: "", address: "", phone: "", hours: "" });
 	};
-	const handleAdd = (e) => {
+	const handleAdd = async (e) => {
 		e.preventDefault();
 		if (!form.name.trim() || !form.address.trim()) {
 			alert("Please provide at least a name and address for the center.");
 			return;
 		}
-		const newCenter = { ...form, id: Date.now() };
-		setCollectionCenters((prev) => [newCenter, ...prev]);
-		cancelAdd();
+
+		// Map frontend fields to backend payload:
+		// backend fields: { location, created_by, location_url?, time_open, contact }
+		const payload = {
+			// We'll send location as the address (you can change to name if desired)
+			location: form.address,
+			created_by: currentUserId,
+			location_url: "", // no map URL from frontend right now
+			time_open: form.hours,
+			contact: form.phone,
+			// If you want to keep 'name' and 'company' in DB, you'd add columns / modify API.
+		};
+
+		try {
+			const created = await createCenter(payload);
+			// Map created back to frontend shape
+			const mapped = {
+				id: created.id,
+				name: form.name,
+				company: form.company,
+				address: created.location || form.address,
+				phone: created.contact || form.phone,
+				hours: created.time_open || form.hours,
+				raw: created,
+			};
+			setCollectionCenters((prev) => [mapped, ...prev]);
+			cancelAdd();
+		} catch (err) {
+			console.error(err);
+			alert("Failed to create center. See console for details.");
+		}
 	};
 
 	// EDIT
@@ -86,28 +127,66 @@ export default function CorporativeCenters() {
 		setEditingId(null);
 		setForm({ name: "", company: "", address: "", phone: "", hours: "" });
 	};
-	const saveEdit = (e) => {
+	const saveEdit = async (e) => {
 		e.preventDefault();
 		if (!form.name.trim() || !form.address.trim()) {
 			alert("Please provide at least a name and address.");
 			return;
 		}
-		setCollectionCenters((prev) =>
-			prev.map((c) => (c.id === editingId ? { ...c, ...form } : c)),
-		);
-		cancelEdit();
+
+		const payload = {
+			location: form.address,
+			time_open: form.hours,
+			contact: form.phone,
+			// backend doesn't know about `name` or `company` columns in current schema
+		};
+
+		try {
+			const updated = await updateCenter(editingId, payload);
+			setCollectionCenters((prev) =>
+				prev.map((c) =>
+					c.id === editingId
+						? {
+								...c,
+								name: form.name,
+								company: form.company,
+								address: updated.location || form.address,
+								phone: updated.contact || form.phone,
+								hours: updated.time_open || form.hours,
+								raw: updated,
+						  }
+						: c,
+				),
+			);
+			cancelEdit();
+		} catch (err) {
+			console.error(err);
+			alert("Failed to update center. See console for details.");
+		}
 	};
 
 	// DELETE
-	const handleDelete = (id) => {
+	const handleDelete = async (id) => {
 		const center = collectionCenters.find((c) => c.id === id);
 		if (!center) return;
 		const confirmed = window.confirm(
 			`Delete "${center.name}"? This cannot be undone.`,
 		);
 		if (!confirmed) return;
-		setCollectionCenters((prev) => prev.filter((c) => c.id !== id));
-		if (editingId === id) cancelEdit();
+
+		try {
+			const ok = await deleteCenter(id);
+			if (ok === true) {
+				setCollectionCenters((prev) => prev.filter((c) => c.id !== id));
+				if (editingId === id) cancelEdit();
+			} else {
+				// backend returned something — fallback to refresh list
+				await fetchCenters();
+			}
+		} catch (err) {
+			console.error(err);
+			alert("Failed to delete center. See console for details.");
+		}
 	};
 
 	return (
@@ -121,13 +200,16 @@ export default function CorporativeCenters() {
 					Manage your {collectionCenters.length} collection centers
 				</p>
 
-				{/* ADD BUTTON placed after the manage line (per your request) */}
+				{/* ADD BUTTON */}
 				<div className="mt-4">
 					<button onClick={openAdd} className={BUTTON_STYLE}>
 						Add Center
 					</button>
 				</div>
 			</div>
+
+			{loading && <p className="text-gray-500">Loading centers…</p>}
+			{error && <p className="text-red-500">{error}</p>}
 
 			{/* Inline Add Form */}
 			{isAdding && (
@@ -193,7 +275,6 @@ export default function CorporativeCenters() {
 						key={center.id}
 						className="bg-[#ECF1E6] rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow duration-200"
 					>
-						{/* If editing this center, show edit form inline */}
 						{editingId === center.id ? (
 							<form onSubmit={saveEdit} className="space-y-4">
 								<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -246,7 +327,6 @@ export default function CorporativeCenters() {
 							</form>
 						) : (
 							<>
-								{/* Center Name and Company */}
 								<div className="mb-4">
 									<h3 className="text-lg font-semibold text-gray-800 mb-1">
 										{center.name}
@@ -254,9 +334,7 @@ export default function CorporativeCenters() {
 									<p className="text-sm text-gray-600">{center.company}</p>
 								</div>
 
-								{/* Contact Information */}
 								<div className="space-y-2">
-									{/* Address */}
 									<div className="flex items-center text-gray-600">
 										<svg
 											className="w-4 h-4 mr-2 flex-shrink-0"
@@ -272,7 +350,6 @@ export default function CorporativeCenters() {
 										<span className="text-sm">{center.address}</span>
 									</div>
 
-									{/* Phone */}
 									<div className="flex items-center text-gray-600">
 										<svg
 											className="w-4 h-4 mr-2 flex-shrink-0"
@@ -284,7 +361,6 @@ export default function CorporativeCenters() {
 										<span className="text-sm">{center.phone}</span>
 									</div>
 
-									{/* Hours */}
 									<div className="flex items-center text-gray-600">
 										<svg
 											className="w-4 h-4 mr-2 flex-shrink-0"
@@ -300,7 +376,6 @@ export default function CorporativeCenters() {
 										<span className="text-sm">{center.hours}</span>
 									</div>
 
-									{/* Action buttons (styled with your provided tailwind) */}
 									<div className="mt-4 flex gap-3">
 										<button
 											onClick={() => startEdit(center)}
@@ -321,7 +396,7 @@ export default function CorporativeCenters() {
 					</div>
 				))}
 
-				{collectionCenters.length === 0 && (
+				{collectionCenters.length === 0 && !loading && (
 					<p className="text-center text-gray-500">
 						No collection centers available.
 					</p>
