@@ -357,7 +357,88 @@ class ApiService {
                         isOpen: true
                     }
                 ]
+            },
+
+            // Upload photo response
+            '/uploads/photo': {
+                file_id: 'test-uuid-' + Date.now(),
+                filename: 'uploaded_waste.jpg',
+                upload_timestamp: new Date().toISOString(),
+                message: 'File uploaded successfully'
             }
+        }
+
+        // Handle AI classify endpoint with random classification
+        if (endpoint.includes('/classify')) {
+            const wasteTypes = ['plastic', 'paper', 'glass', 'metal', 'organic', 'e-waste'];
+            const randomType = wasteTypes[Math.floor(Math.random() * wasteTypes.length)];
+            const confidenceMap = {
+                'plastic': 85,
+                'paper': 82,
+                'glass': 90,
+                'metal': 88,
+                'organic': 75,
+                'e-waste': 80
+            };
+            const pointsMap = {
+                'plastic': 10,
+                'paper': 8,
+                'glass': 12,
+                'metal': 15,
+                'organic': 5,
+                'e-waste': 20
+            };
+            const descriptionMap = {
+                'plastic': 'Plastic waste (bottles, containers, packaging)',
+                'paper': 'Paper and cardboard waste',
+                'glass': 'Glass bottles and containers',
+                'metal': 'Metal cans and containers',
+                'organic': 'Organic/biodegradable waste',
+                'e-waste': 'Electronic waste (batteries, devices)'
+            };
+            const recommendationsMap = {
+                'plastic': [
+                    'Clean and dry the plastic items',
+                    'Remove caps and labels if possible',
+                    'Crush bottles to save space'
+                ],
+                'paper': [
+                    'Keep paper dry and clean',
+                    'Remove any plastic wrapping',
+                    'Flatten cardboard boxes'
+                ],
+                'glass': [
+                    'Rinse containers thoroughly',
+                    'Remove lids and caps',
+                    'Keep different colors separated if possible'
+                ],
+                'metal': [
+                    'Rinse cans and containers',
+                    'Crush cans to save space',
+                    'Remove any non-metal parts'
+                ],
+                'organic': [
+                    'Consider composting if possible',
+                    'Separate from other waste types',
+                    'Use for garden fertilizer if suitable'
+                ],
+                'e-waste': [
+                    'Never mix with regular trash',
+                    'Remove batteries separately',
+                    'Take to specialized e-waste collection centers'
+                ]
+            };
+
+            console.log(`🤖 AI Classification: ${randomType} (${confidenceMap[randomType]}% confidence)`);
+            
+            return Promise.resolve({
+                type: randomType,
+                confidence: confidenceMap[randomType],
+                points: pointsMap[randomType],
+                description: descriptionMap[randomType],
+                recommendations: recommendationsMap[randomType],
+                timestamp: Date.now()
+            });
         }
 
         // Return fallback data based on endpoint
