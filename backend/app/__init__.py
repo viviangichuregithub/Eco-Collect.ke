@@ -1,60 +1,98 @@
 from flask import Flask
-from app.config import DevelopmentConfig
+from app.config import DevelopmentConfig, ProductionConfig
 from app.extensions import db, bcrypt, migrate, cors
 from flask_session import Session
+import cloudinary
 import os
 
-def create_app(config_class=DevelopmentConfig):
+
+def create_app():
+    # ----------------------------------
+    # Select config dynamically
+    # ----------------------------------
+    env = os.environ.get("FLASK_ENV", "development").lower()
+    config_class = DevelopmentConfig if env == "development" else ProductionConfig
+
     app = Flask(__name__)
     app.config.from_object(config_class)
 
-    # Setup session to store cookies in the instance folder
+    # ----------------------------------
+    # SESSION CONFIGURATION
+    # ----------------------------------
     app.config.update(
         SESSION_TYPE="filesystem",
-        SESSION_FILE_DIR=os.path.join(os.path.dirname(__file__), "..", "instance", "flask_sessions"),
+        SESSION_FILE_DIR=os.path.join(
+            os.path.dirname(__file__), "..", "instance", "flask_sessions"
+        ),
         SESSION_COOKIE_HTTPONLY=True,
-        SESSION_COOKIE_SAMESITE="Lax",
-        SESSION_COOKIE_SECURE=False,  # dev only
+        SESSION_COOKIE_SAMESITE=app.config.get("COOKIE_SAMESITE", "Lax"),
+        SESSION_COOKIE_SECURE=app.config.get("COOKIE_SECURE", False),
         SESSION_PERMANENT=False,
     )
-    sess = Session(app)  # initialize session
 
-    # Initialize extensions
+    os.makedirs(app.config["SESSION_FILE_DIR"], exist_ok=True)
+    Session(app)
+
+    # ----------------------------------
+    # EXTENSIONS INITIALIZATION
+    # ----------------------------------
     db.init_app(app)
     bcrypt.init_app(app)
     migrate.init_app(app, db)
 
-    # CORS with credentials
-    cors.init_app(app, supports_credentials=True, origins=[config_class.CORS_ORIGINS])
+    cors.init_app(
+        app,
+        supports_credentials=True,
+        origins=[app.config["CORS_ORIGINS"]],
+    )
 
-    # Register blueprints
+    # ----------------------------------
+    # CLOUDINARY CONFIG
+    # ----------------------------------
+    cloudinary.config(
+        cloud_name=app.config.get("CLOUDINARY_CLOUD_NAME"),
+        api_key=app.config.get("CLOUDINARY_API_KEY"),
+        api_secret=app.config.get("CLOUDINARY_API_SECRET"),
+        secure=True,
+    )
+
+    # ----------------------------------
+    # BLUEPRINTS
+    # ----------------------------------
     from app.routes.auth import auth_bp
-    app.register_blueprint(auth_bp, url_prefix="/auth")
-
+    from app.routes.profile import profile_bp
     from app.routes.uploads import uploads_bp
+
+    app.register_blueprint(auth_bp, url_prefix="/auth")
+    app.register_blueprint(profile_bp, url_prefix="/profile")
     app.register_blueprint(uploads_bp, url_prefix="/api/uploads")
 
-    from app.models import user  # ensure models are loaded
+    # ----------------------------------
+    # MODELS IMPORT
+    # ----------------------------------
+    from app.models import user  # noqa: F401
 
-    # Add a simple index route to show available endpoints
-    @app.route('/')
+    # ----------------------------------
+    # SIMPLE ROUTES / HEALTH CHECK
+    # ----------------------------------
+    @app.route("/")
     def index():
         return {
-            'message': 'Eco-Collect.ke API',
-            'version': '1.0.0',
-            'status': 'running',
-            'endpoints': {
-                'auth': '/auth',
-                'uploads': '/api/uploads',
-                'health': '/health'
+            "message": "Eco-Collect.ke API",
+            "version": "1.0.0",
+            "status": "running",
+            "env": env,
+            "endpoints": {
+                "auth": "/auth",
+                "profile": "/profile",
+                "uploads": "/api/uploads",
+                "health": "/health",
             },
-            'documentation': 'See AI_CLASSIFICATION_README.md'
+            "documentation": "See AI_CLASSIFICATION_README.md",
         }
-    
-    @app.route('/health')
-    def health():
-        return {'status': 'healthy', 'service': 'eco-collect-api'}
 
-    os.makedirs(app.config["SESSION_FILE_DIR"], exist_ok=True)
+    @app.route("/health")
+    def health():
+        return {"status": "healthy", "service": "eco-collect-api"}
 
     return app

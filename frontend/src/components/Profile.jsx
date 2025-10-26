@@ -1,501 +1,240 @@
 "use client"
-import React, { useState, useEffect } from 'react'
-import apiService from '../lib/api'
+import React, { useState, useEffect } from "react"
+import { getCurrentUser, uploadProfileImage } from "../lib/user"
+import { jsPDF } from "jspdf"
+import {
+  Download,
+  Upload,
+  Leaf,
+  Award,
+  Globe2,
+  Recycle,
+} from "lucide-react"
 
 export default function Profile() {
   const [userProfile, setUserProfile] = useState(null)
   const [impactStats, setImpactStats] = useState(null)
+  const [achievements, setAchievements] = useState([])
+  const [adviceText, setAdviceText] = useState("")
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [isEditing, setIsEditing] = useState(false)
-  const [editFormData, setEditFormData] = useState({})
-  const [isUpdating, setIsUpdating] = useState(false)
-  const [achievements, setAchievements] = useState([])
-  const [pointsHistory, setPointsHistory] = useState([])
-  const [showPointsHistory, setShowPointsHistory] = useState(false)
-  const [showEditModal, setShowEditModal] = useState(false)
-  const [editForm, setEditForm] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    location: ''
-  })
-  const [editLoading, setEditLoading] = useState(false)
-  const [downloadingReport, setDownloadingReport] = useState(false)
+  const [uploadingImage, setUploadingImage] = useState(false)
 
+  // Fetch user profile and load mock data
   useEffect(() => {
-    loadUserProfile()
-    loadUserStats()
-    loadAchievements()
+    const fetchProfile = async () => {
+      try {
+        const data = await getCurrentUser()
+        setUserProfile(data)
+      } catch (err) {
+        console.error(err)
+        setError(err?.response?.data?.error || "Failed to fetch profile")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchProfile()
+    loadMockStats()
+    loadMockAchievements()
+    generateKenyaAdvisory()
   }, [])
 
-  // Populate edit form when user profile loads
-  useEffect(() => {
-    if (userProfile) {
-      setEditForm({
-        name: userProfile.name || '',
-        email: userProfile.email || '',
-        phone: userProfile.phone || '',
-        location: userProfile.location || ''
-      })
-    }
-  }, [userProfile])
-
-  const loadUserProfile = async () => {
-    try {
-      const profile = await apiService.getUserProfile()
-      setUserProfile(profile)
-      setEditFormData({
-        name: profile.name,
-        email: profile.email,
-        phone: profile.phone || '',
-        location: profile.location || '',
-        bio: profile.bio || ''
-      })
-    } catch (error) {
-      console.error('Failed to load user profile:', error)
-      setError('Failed to load profile data')
-      // Fallback to mock data
-      setUserProfile({
-        id: 1,
-        name: "Vivian Gichure",
-        email: "vivian@gmail.com",
-        phone: "+254 712 345 678",
-        location: "Nairobi, Kenya",
-        memberSince: "September 2025",
-        avatar: null,
-        bio: "Environmental enthusiast passionate about waste recycling and sustainability."
-      })
-    }
-  }
-
-  const loadUserStats = async () => {
-    try {
-      const stats = await apiService.getUserStats()
-      setImpactStats(stats)
-    } catch (error) {
-      console.error('Failed to load user stats:', error)
-      // Fallback to mock data
-      setImpactStats({
-        totalSubmissions: 4,
-        totalWeight: 4.5,
-        co2Reduced: 2.1,
-        pointsEarned: 250,
-        pointsAvailable: 250,
-        rank: "Eco Warrior",
-        weeklyGoal: 10,
-        weeklyProgress: 7,
-        monthlyGoal: 40,
-        monthlyProgress: 28
-      })
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const loadAchievements = async () => {
-    try {
-      const achievementsData = await apiService.getPointsHistory()
-      setAchievements(achievementsData.achievements || [])
-      setPointsHistory(achievementsData.history || [])
-    } catch (error) {
-      console.error('Failed to load achievements:', error)
-      // Fallback to mock data
-      setAchievements([
-        { id: 1, title: "First Submission", description: "Made your first waste submission", earned: true, date: "2025-09-15" },
-        { id: 2, title: "Plastic Warrior", description: "Submitted 10kg of plastic waste", earned: true, date: "2025-10-10" },
-        { id: 3, title: "Eco Champion", description: "Reach 100 points", earned: false, progress: 50 },
-        { id: 4, title: "Weekly Goal", description: "Complete weekly recycling goal", earned: true, date: "2025-10-20" }
-      ])
-    }
-  }
-
-  const handleEditProfile = () => {
-    setIsEditing(true)
-  }
-
-  const handleCancelEdit = () => {
-    setIsEditing(false)
-    setEditFormData({
-      name: userProfile.name,
-      email: userProfile.email,
-      phone: userProfile.phone || '',
-      location: userProfile.location || '',
-      bio: userProfile.bio || ''
+  // Mock environmental stats
+  const loadMockStats = () => {
+    setImpactStats({
+      totalSubmissions: 4,
+      totalWeight: 4.5,
+      co2Reduced: "2.1kg",
+      pointsEarned: 250,
+      rank: "Eco Warrior",
     })
   }
 
-  const handleUpdateProfile = async () => {
-    setIsUpdating(true)
-    setError(null)
-
-    try {
-      const updatedProfile = await apiService.updateUserProfile(editFormData)
-      setUserProfile(updatedProfile)
-      setIsEditing(false)
-      alert('Profile updated successfully!')
-    } catch (error) {
-      console.error('Failed to update profile:', error)
-      setError('Failed to update profile. Please try again.')
-    } finally {
-      setIsUpdating(false)
-    }
+  // Mock achievements
+  const loadMockAchievements = () => {
+    setAchievements([
+      { id: 1, title: "First Submission", description: "Made your first waste submission", earned: true, date: "2025-09-15" },
+      { id: 2, title: "Plastic Warrior", description: "Submitted 10kg of plastic waste", earned: true, date: "2025-10-10" },
+    ])
   }
 
-  const handleInputChange = (field, value) => {
-    setEditFormData(prev => ({
-      ...prev,
-      [field]: value
-    }))
+  // Advisory text
+  const generateKenyaAdvisory = () => {
+    const text = `
+ENVIRONMENTAL ADVISORY FOR KENYA: CLIMATE ACTION & LIFE BELOW WATER
+
+Kenya is at the frontline of climate change, experiencing the impacts of prolonged droughts, unpredictable rainfall, floods, rising sea levels, and the increasing prevalence of plastic and chemical pollution. These challenges not only affect ecosystems but also threaten livelihoods, food security, and public health. From the arid lands of Turkana to the lush coastal mangroves of Lamu, the impacts of climate change are being felt across every region. However, every Kenyan, from rural farmers to urban youth, can contribute to climate action and environmental restoration through deliberate, everyday choices.
+
+1. CLIMATE ACTION (SDG 13)
+
+Climate change is primarily driven by greenhouse gas emissions. In Kenya, transportation, energy production, deforestation, and inefficient waste management contribute significantly to carbon output. Individual and community actions can help reduce these emissions while building resilience to climate impacts.
+- Waste Management: Proper separation and recycling of plastics, organics, metals, and glass is a critical first step. Organic waste can be composted to enrich soils, while plastics and metals can be repurposed or sold to recycling centers, reducing landfill methane emissions. County-level recycling initiatives and community collection points are excellent ways to participate in responsible waste management.
+- Clean Energy Adoption: Solar energy and biogas are practical and increasingly affordable ways for Kenyan households and communities to reduce dependence on fossil fuels. Installing solar panels for lighting, water heating, or small appliances can significantly lower your household carbon footprint, while biogas from organic waste can provide clean cooking fuel.
+- Transportation Choices: Reducing vehicle emissions is another crucial action. Walking, cycling, using public transport, or carpooling minimizes fuel consumption and urban air pollution. For longer journeys, electric or hybrid vehicles can offer sustainable alternatives as infrastructure develops.
+- Tree Planting and Green Infrastructure: Trees act as carbon sinks, reduce urban heat, prevent soil erosion, and improve air quality. Participating in tree-planting drives or creating community gardens strengthens both ecological and social resilience. Supporting climate-smart agriculture—like crop rotation, drought-resistant crops, and soil conservation—helps farmers adapt to changing weather patterns while reducing emissions.
+
+2. LIFE BELOW WATER (SDG 14)
+
+Kenya’s rivers, lakes, and coastal waters are vital for biodiversity, fisheries, and livelihoods. Protecting these ecosystems is essential for climate resilience and food security.
+- Preventing Water Pollution: Avoid dumping waste into rivers, drainage systems, or directly into the ocean. Plastic and chemical waste degrade marine habitats, threaten wildlife, and accumulate toxins in the food chain.
+- Reducing Single-Use Plastics: Substituting reusable bags, bottles, and packaging reduces pollution reaching waterways. Encourage local businesses to adopt eco-friendly alternatives.
+- Mangrove and Wetland Conservation: Mangroves act as natural buffers against coastal erosion, trap carbon, and provide nursery habitats for fish. Support mangrove restoration programs along the Kenyan coast and wetland conservation efforts inland.
+- Community Cleanups: Participate in coastal, river, and lake cleanups in cities like Mombasa, Lamu, and Kisumu. These activities raise awareness, reduce pollution, and protect both aquatic life and human communities.
+
+3. BUILDING LOCAL CLIMATE RESILIENCE
+
+Climate resilience begins at the community level. Educating family members, neighbors, and local leaders about sustainable practices multiplies the impact of individual actions.
+- Organic Waste Composting and Rainwater Harvesting: Transforming organic waste into compost reduces landfill methane emissions while enriching soils. Collecting and storing rainwater ensures availability during dry seasons and reduces pressure on municipal water systems.
+- Circular Economy Practices: Repairing, reusing, and repurposing items reduces resource extraction and landfill waste. Encourage local businesses and schools to participate in material recovery initiatives.
+- Supporting Green Enterprises: Youth and women-led startups focusing on sustainable products, renewable energy, and eco-friendly solutions strengthen local economies while advancing climate action.
+
+4. THE KENYAN CLIMATE PLEDGE
+
+By aligning with SDG 13 and its related goals, every Kenyan can contribute to a sustainable future. Collective actions include:
+- Reducing pollution and carbon emissions through responsible energy use, transport choices, and waste management.
+- Protecting rivers, lakes, and oceans to preserve biodiversity and fisheries.
+- Restoring degraded ecosystems from Turkana to the coastal mangroves.
+- Promoting cleaner, smarter, and sustainable cities through green infrastructure and urban planning.
+
+Together, these efforts can position Kenya as a leader in climate resilience within Africa. Each small action—planting a tree, recycling waste, conserving energy, educating others—multiplies across communities, creating meaningful change.
+Every Kenyan can be a climate champion. Protecting our land, water, and atmosphere today ensures a healthier, more resilient future for generations to come. Let us unite in making Kenya cleaner, greener, and climate-smart.
+
+Eco-Collect Initiative
+`
+    setAdviceText(text)
   }
 
-  const downloadReport = async () => {
-    try {
-      // In real implementation, this would generate and download a PDF report
-      const reportData = {
-        profile: userProfile,
-        stats: impactStats,
-        achievements: achievements.filter(a => a.earned)
-      }
-      
-      console.log('Generating report:', reportData)
-      alert('Report download feature will be implemented with backend integration')
-    } catch (error) {
-      console.error('Failed to generate report:', error)
-      setError('Failed to generate report')
-    }
-  }
-
-  const getProgressPercentage = (current, goal) => {
-    return Math.min((current / goal) * 100, 100)
-  }
-
-  const handleDownloadReport = async () => {
-    setDownloadingReport(true)
-    try {
-      await downloadReport()
-    } finally {
-      setDownloadingReport(false)
-    }
-  }
-
-  const handleEditSubmit = async (e) => {
-    e.preventDefault()
-    setEditLoading(true)
-    try {
-      await apiService.updateUserProfile(editForm)
-      setUserProfile(prev => ({ ...prev, ...editForm }))
-      setShowEditModal(false)
-      alert('Profile updated successfully!')
-    } catch (error) {
-      console.error('Failed to update profile:', error)
-      alert('Failed to update profile. Please try again.')
-    } finally {
-      setEditLoading(false)
-    }
-  }
-
-  const handleAvatarUpload = (e) => {
+  // Handle avatar upload
+  const handleImageUpload = async (e) => {
     const file = e.target.files[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        setEditForm(prev => ({ ...prev, avatar: e.target.result }))
-      }
-      reader.readAsDataURL(file)
+    if (!file) return
+    setUploadingImage(true)
+
+    try {
+      // Upload the raw file directly
+      await uploadProfileImage(file)
+      // Refresh user profile after upload
+      const updated = await getCurrentUser()
+      setUserProfile(updated)
+    } catch (err) {
+      console.error(err)
+      alert("Failed to upload image.")
+    } finally {
+      setUploadingImage(false)
     }
   }
 
-  const getInitials = (name) => {
-    return name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U'
+  // Download advisory as PDF
+  const handleDownloadAdvisory = () => {
+    const doc = new jsPDF()
+    doc.setFont("Helvetica", "normal")
+    doc.setFontSize(12)
+    const pageHeight = doc.internal.pageSize.height
+    const margin = 15
+    const lineHeight = 7
+    let y = margin
+
+    const lines = doc.splitTextToSize(adviceText, 180)
+    lines.forEach(line => {
+      if (y + lineHeight > pageHeight - margin) {
+        doc.addPage()
+        y = margin
+      }
+      doc.text(line, margin, y)
+      y += lineHeight
+    })
+
+    doc.save("Kenya_Environmental_Advisory.pdf")
   }
 
-  if (loading) {
-    return (
-      <div className='w-full max-w-4xl mx-auto p-8 bg-white text-black text-poppins'>
-        <div className='flex items-center justify-center h-64'>
-          <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-[#355E62]'></div>
-          <span className='ml-3 text-gray-600'>Loading profile...</span>
-        </div>
-      </div>
-    )
-  }
+  if (loading) return (
+    <div className="flex items-center justify-center h-64">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#355E62]"></div>
+    </div>
+  )
 
-  if (!userProfile) {
-    return (
-      <div className='w-full max-w-4xl mx-auto p-8 bg-white text-black text-poppins'>
-        <div className='text-center py-12'>
-          <div className='text-gray-400 text-lg mb-2'>Unable to load profile</div>
-          <button 
-            onClick={loadUserProfile}
-            className='px-4 py-2 bg-[#355E62] text-white rounded-lg hover:bg-[#2a4a4e]'>
-            Try Again
-          </button>
-        </div>
-      </div>
-    )
-  }
+  if (error) return (
+    <div className="text-center text-red-600 py-8">
+      <p>{error}</p>
+    </div>
+  )
 
   return (
-    <div className='w-full max-w-6xl mx-auto p-8 bg-white text-black text-poppins'>
-      {/* Header Section */}
-      <div className='mb-8'>
-        <div className='flex items-center justify-between'>
-          <div>
-            <h1 className='text-[32px] font-semibold text-gray-700 mb-2'>Profile Information</h1>
-            <p className='text-gray-500 text-lg'>Your account details and statistics</p>
-          </div>
-          <div className='flex gap-2'>
-            <button 
-              onClick={() => setShowPointsHistory(!showPointsHistory)}
-              className='px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors'>
-              Points History
-            </button>
-            <button 
-              onClick={downloadReport}
-              className='px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors'>
-              Download Report
-            </button>
-          </div>
-        </div>
+    <div className="w-full max-w-6xl mx-auto p-8 bg-white text-black text-poppins">
+      {/* Header */}
+      <div className="mb-8 text-left">
+        <h1 className="text-3xl font-semibold text-gray-800 flex items-center gap-2">
+          <Globe2 className="text-[#355E62]" /> Profile Information
+        </h1>
+        <p className="text-gray-500 mt-1">Your account details and contribution to Kenya’s sustainability</p>
       </div>
-
-      {/* Error Display */}
-      {error && (
-        <div className='mb-6 p-4 bg-red-50 border border-red-200 rounded-lg'>
-          <div className='flex items-center'>
-            <svg className='w-5 h-5 text-red-500 mr-2' fill='currentColor' viewBox='0 0 20 20'>
-              <path fillRule='evenodd' d='M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z' clipRule='evenodd' />
-            </svg>
-            <span className='text-red-700 text-sm'>{error}</span>
-          </div>
-        </div>
-      )}
 
       {/* Profile Card */}
-      <div className='bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8'>
-        <div className='flex items-start gap-6'>
-          {/* Avatar */}
-          <div className='w-24 h-24 bg-[#355E62] rounded-full flex items-center justify-center text-white text-2xl font-semibold flex-shrink-0'>
-            {userProfile.avatar ? (
-              <img 
-                src={userProfile.avatar} 
-                alt={userProfile.name}
-                className='w-full h-full rounded-full object-cover'
-              />
-            ) : (
-              <span>{getInitials(userProfile.name)}</span>
-            )}
+      <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6 mb-10 flex flex-col md:flex-row items-center gap-6">
+        <div className="relative">
+          <div className="w-32 h-32 bg-[#355E62] rounded-full flex items-center justify-center text-white text-3xl font-semibold overflow-hidden shadow-sm">
+            <img
+              src={userProfile?.avatar || "/avatar.png"}
+              alt={userProfile?.name || "User"}
+              className="w-full h-full object-cover rounded-full"
+            />
           </div>
+          <label className="absolute bottom-1 right-1 bg-[#355E62] text-white p-1.5 rounded-full cursor-pointer hover:bg-[#2a4a4e] transition-all shadow-md">
+            {uploadingImage ? <span className="text-xs px-1">...</span> : <Upload size={16} />}
+            <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+          </label>
+        </div>
 
-          {/* Profile Details */}
-          <div className='flex-1'>
-            <h2 className='text-2xl font-semibold text-gray-800 mb-2'>{userProfile.name}</h2>
-            
-            <div className='space-y-2'>
-              <div className='flex items-center text-gray-600'>
-                <svg className='w-4 h-4 mr-2' fill='currentColor' viewBox='0 0 20 20'>
-                  <path d='M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z' />
-                  <path d='M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z' />
-                </svg>
-                <span className='text-sm'>{userProfile.email}</span>
-              </div>
-              
-              <div className='flex items-center text-gray-600'>
-                <svg className='w-4 h-4 mr-2' fill='currentColor' viewBox='0 0 20 20'>
-                  <path fillRule='evenodd' d='M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z' clipRule='evenodd' />
-                </svg>
-                <span className='text-sm'>Member since {userProfile.memberSince}</span>
-              </div>
-            </div>
-          </div>
+        <div className="flex-1 text-center md:text-left">
+          <h2 className="text-2xl font-semibold text-gray-800">{userProfile?.name}</h2>
+          <p className="text-sm text-gray-600">{userProfile?.email}</p>
+          <p className="text-sm text-gray-600">Member since {userProfile?.memberSince}</p>
         </div>
       </div>
 
-      {/* Impact Summary */}
-      <div className='mb-6'>
-        <h3 className='text-xl font-semibold text-gray-800 mb-4'>Impact Summary</h3>
-        <p className='text-gray-500 mb-6'>Your contribution to the circular economy</p>
-      </div>
-
-      {/* Environmental Impact Card */}
-      <div className='bg-[#F8FAF8] rounded-lg border border-gray-200 p-6'>
-        <div className='mb-4'>
-          <h4 className='text-lg font-medium text-gray-800 mb-2'>Environmental Impact</h4>
-        </div>
-        
-        <div className='bg-white rounded-lg p-4 shadow-sm'>
-          <p className='text-sm text-gray-600 leading-relaxed'>
-            By recycling <span className='font-medium text-[#355E62]'>{impactStats.totalWeight}</span>, you've helped divert waste from landfills and contributed to reducing <span className='font-medium text-[#355E62]'>{impactStats.co2Reduced}</span> CO₂ emissions in Kenya.
-          </p>
-        </div>
-
-        {/* Statistics Grid */}
-        <div className='grid grid-cols-2 md:grid-cols-4 gap-4 mt-6'>
-          <div className='text-center p-4 bg-white rounded-lg shadow-sm'>
-            <div className='text-2xl font-bold text-[#355E62] mb-1'>{impactStats.totalSubmissions}</div>
-            <div className='text-xs text-gray-600 uppercase tracking-wide'>Total Submissions</div>
-          </div>
-          
-          <div className='text-center p-4 bg-white rounded-lg shadow-sm'>
-            <div className='text-2xl font-bold text-[#355E62] mb-1'>{impactStats.totalWeight}</div>
-            <div className='text-xs text-gray-600 uppercase tracking-wide'>Waste Recycled</div>
-          </div>
-          
-          <div className='text-center p-4 bg-white rounded-lg shadow-sm'>
-            <div className='text-2xl font-bold text-[#355E62] mb-1'>{impactStats.co2Reduced}</div>
-            <div className='text-xs text-gray-600 uppercase tracking-wide'>CO₂ Reduced</div>
-          </div>
-          
-          <div className='text-center p-4 bg-white rounded-lg shadow-sm'>
-            <div className='text-2xl font-bold text-[#355E62] mb-1'>{impactStats.pointsEarned}</div>
-            <div className='text-xs text-gray-600 uppercase tracking-wide'>Points Earned</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Achievements Section */}
-      <div className='mt-8'>
-        <h3 className='text-xl font-semibold text-gray-800 mb-4'>Achievements</h3>
-        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
-          {achievements.map((achievement, index) => (
-            <div 
-              key={index}
-              className={`p-4 rounded-lg border-2 transition-all ${
-                achievement.unlocked 
-                  ? 'bg-[#355E62] border-[#355E62] text-white shadow-lg' 
-                  : 'bg-gray-50 border-gray-200 text-gray-500'
-              }`}
-            >
-              <div className='text-2xl mb-2'>{achievement.icon}</div>
-              <h4 className='font-semibold text-sm mb-1'>{achievement.title}</h4>
-              <p className='text-xs opacity-90'>{achievement.description}</p>
-              {achievement.unlocked && (
-                <div className='text-xs mt-2 opacity-75'>
-                  Earned {achievement.earnedDate}
-                </div>
-              )}
+      {/* Achievements */}
+      <div className="mb-10">
+        <h3 className="text-2xl font-semibold text-gray-800 flex items-center gap-2 mb-4">
+          <Award className="text-[#355E62]" /> Achievements
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {achievements.map((ach) => (
+            <div key={ach.id} className={`p-4 rounded-xl border transition-all ${ach.earned ? "bg-[#355E62] border-[#355E62] text-white shadow-lg" : "bg-gray-50 border-gray-200 text-gray-600"}`}>
+              <h4 className="font-semibold text-sm mb-1">{ach.title}</h4>
+              <p className="text-xs opacity-90">{ach.description}</p>
+              {ach.earned && <p className="text-xs mt-2 opacity-75">Earned {ach.date}</p>}
             </div>
           ))}
         </div>
       </div>
 
-      {/* Action Buttons */}
-      <div className='flex gap-4 mt-8'>
-        <button 
-          onClick={() => setShowEditModal(true)}
-          className='px-6 py-2 bg-[#355E62] text-white rounded-lg font-medium hover:bg-[#2a4a4e] transition-colors'
-        >
-          Edit Profile
-        </button>
-        <button 
-          onClick={handleDownloadReport}
-          disabled={downloadingReport}
-          className='px-6 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors disabled:opacity-50'
-        >
-          {downloadingReport ? 'Generating...' : 'Download Report'}
-        </button>
+      {/* Environmental Impact */}
+      <div className="bg-[#F8FAF8] rounded-xl border border-gray-200 p-6 mb-10">
+        <h3 className="text-2xl font-semibold text-gray-800 flex items-center gap-2 mb-3">
+          <Recycle className="text-[#355E62]" /> Environmental Impact
+        </h3>
+        <div className="bg-white rounded-lg p-4 shadow-sm">
+          <p className="text-sm text-gray-600 leading-relaxed">
+            By recycling <span className="font-medium text-[#355E62]">{impactStats?.totalWeight}</span>, you've helped reduce <span className="font-medium text-[#355E62]">{impactStats?.co2Reduced}</span> CO₂ emissions — a strong contribution to Kenya’s climate action goals.
+          </p>
+        </div>
       </div>
 
-      {/* Edit Profile Modal */}
-      {showEditModal && (
-        <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'>
-          <div className='bg-white rounded-lg p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto'>
-            <div className='flex justify-between items-center mb-6'>
-              <h3 className='text-xl font-semibold text-gray-800'>Edit Profile</h3>
-              <button 
-                onClick={() => setShowEditModal(false)}
-                className='text-gray-400 hover:text-gray-600'
-              >
-                <svg className='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' />
-                </svg>
-              </button>
-            </div>
-
-            <form onSubmit={handleEditSubmit} className='space-y-4'>
-              <div>
-                <label className='block text-sm font-medium text-gray-700 mb-2'>
-                  Full Name
-                </label>
-                <input
-                  type='text'
-                  value={editForm.name}
-                  onChange={(e) => setEditForm({...editForm, name: e.target.value})}
-                  className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#355E62]'
-                  required
-                />
-              </div>
-
-              <div>
-                <label className='block text-sm font-medium text-gray-700 mb-2'>
-                  Email
-                </label>
-                <input
-                  type='email'
-                  value={editForm.email}
-                  onChange={(e) => setEditForm({...editForm, email: e.target.value})}
-                  className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#355E62]'
-                  required
-                />
-              </div>
-
-              <div>
-                <label className='block text-sm font-medium text-gray-700 mb-2'>
-                  Phone Number
-                </label>
-                <input
-                  type='tel'
-                  value={editForm.phone}
-                  onChange={(e) => setEditForm({...editForm, phone: e.target.value})}
-                  className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#355E62]'
-                />
-              </div>
-
-              <div>
-                <label className='block text-sm font-medium text-gray-700 mb-2'>
-                  Location
-                </label>
-                <input
-                  type='text'
-                  value={editForm.location}
-                  onChange={(e) => setEditForm({...editForm, location: e.target.value})}
-                  className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#355E62]'
-                />
-              </div>
-
-              <div>
-                <label className='block text-sm font-medium text-gray-700 mb-2'>
-                  Profile Picture
-                </label>
-                <input
-                  type='file'
-                  accept='image/*'
-                  onChange={handleAvatarUpload}
-                  className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#355E62]'
-                />
-              </div>
-
-              <div className='flex gap-3 pt-4'>
-                <button
-                  type='submit'
-                  disabled={editLoading}
-                  className='flex-1 px-4 py-2 bg-[#355E62] text-white rounded-lg font-medium hover:bg-[#2a4a4e] transition-colors disabled:opacity-50'
-                >
-                  {editLoading ? 'Saving...' : 'Save Changes'}
-                </button>
-                <button
-                  type='button'
-                  onClick={() => setShowEditModal(false)}
-                  className='px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors'
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
+      {/* Advisory Section */}
+      <div className="bg-[#F9FBF9] border border-gray-200 rounded-xl p-6 shadow-sm">
+        <h3 className="text-2xl font-semibold text-gray-800 flex items-center gap-2 mb-4">
+          <Leaf className="text-[#355E62]" /> Environmental Advisory Lesson
+        </h3>
+        <div className="text-gray-700 leading-relaxed whitespace-pre-wrap max-h-[500px] overflow-y-auto text-sm border border-gray-100 rounded-lg p-4 bg-white shadow-inner">
+          {adviceText}
         </div>
-      )}
+        <div className="flex justify-end mt-6">
+          <button onClick={handleDownloadAdvisory} className="flex items-center gap-2 px-5 py-1 bg-[#355E62] text-white rounded-[64px] font-medium hover:bg-[#2a4a4e] transition-all shadow-md">
+            <Download size={18} /> Download Advisory (PDF)
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
