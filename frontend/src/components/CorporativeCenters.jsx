@@ -25,6 +25,9 @@ export default function CorporativeCenters({ currentUserId = 1 }) {
 		hours: "",
 	});
 
+	// disable submit while request in flight
+	const [submitting, setSubmitting] = useState(false);
+
 	const BUTTON_STYLE =
 		"w-[132px] h-[32px] bg-[#355E62] rounded-[64px] text-[#ffff] hover:cursor-pointer font-poppins text-[14px] font-light";
 
@@ -41,7 +44,7 @@ export default function CorporativeCenters({ currentUserId = 1 }) {
 			// normalize backend shape to frontend (we expect fields id, name, company, address, phone, hours)
 			const normalized = (data || []).map((c) => ({
 				id: c.id,
-				name: c.location_name || c.location || "", // prefer explicit name, fallback to location
+				name: c.name || c.location_name || "", // prefer explicit name, fallback to location
 				company: c.company || "",
 				address: c.location || "",
 				phone: c.contact || "",
@@ -80,27 +83,28 @@ export default function CorporativeCenters({ currentUserId = 1 }) {
 		}
 
 		// Map frontend fields to backend payload:
-		// backend fields: { location, created_by, location_url?, time_open, contact }
+		// backend fields: { name, company, location, created_by, location_url?, time_open, contact }
 		const payload = {
-			// We'll send location as the address (you can change to name if desired)
-			location: form.address,
+			name: form.name.trim(),
+			company: form.company.trim() || null,
+			location: form.address.trim(),
 			created_by: currentUserId,
-			location_url: "", // no map URL from frontend right now
-			time_open: form.hours,
-			contact: form.phone,
-			// If you want to keep 'name' and 'company' in DB, you'd add columns / modify API.
+			location_url: "", // optional
+			time_open: form.hours.trim() || null,
+			contact: form.phone.trim() || null,
 		};
 
 		try {
+			setSubmitting(true);
 			const created = await createCenter(payload);
 			// Map created back to frontend shape
 			const mapped = {
 				id: created.id,
-				name: form.name,
-				company: form.company,
-				address: created.location || form.address,
-				phone: created.contact || form.phone,
-				hours: created.time_open || form.hours,
+				name: created.name || payload.name,
+				company: created.company || payload.company || "",
+				address: created.location || payload.location,
+				phone: created.contact || payload.contact || "",
+				hours: created.time_open || payload.time_open || "",
 				raw: created,
 			};
 			setCollectionCenters((prev) => [mapped, ...prev]);
@@ -108,6 +112,8 @@ export default function CorporativeCenters({ currentUserId = 1 }) {
 		} catch (err) {
 			console.error(err);
 			alert("Failed to create center. See console for details.");
+		} finally {
+			setSubmitting(false);
 		}
 	};
 
@@ -135,24 +141,26 @@ export default function CorporativeCenters({ currentUserId = 1 }) {
 		}
 
 		const payload = {
-			location: form.address,
-			time_open: form.hours,
-			contact: form.phone,
-			// backend doesn't know about `name` or `company` columns in current schema
+			name: form.name.trim(),
+			company: form.company.trim() || null,
+			location: form.address.trim(),
+			time_open: form.hours.trim() || null,
+			contact: form.phone.trim() || null,
 		};
 
 		try {
+			setSubmitting(true);
 			const updated = await updateCenter(editingId, payload);
 			setCollectionCenters((prev) =>
 				prev.map((c) =>
 					c.id === editingId
 						? {
 								...c,
-								name: form.name,
-								company: form.company,
-								address: updated.location || form.address,
-								phone: updated.contact || form.phone,
-								hours: updated.time_open || form.hours,
+								name: updated.name || payload.name,
+								company: updated.company || payload.company || "",
+								address: updated.location || payload.location,
+								phone: updated.contact || payload.contact || "",
+								hours: updated.time_open || payload.time_open || "",
 								raw: updated,
 						  }
 						: c,
@@ -162,6 +170,8 @@ export default function CorporativeCenters({ currentUserId = 1 }) {
 		} catch (err) {
 			console.error(err);
 			alert("Failed to update center. See console for details.");
+		} finally {
+			setSubmitting(false);
 		}
 	};
 
@@ -225,6 +235,7 @@ export default function CorporativeCenters({ currentUserId = 1 }) {
 							placeholder="Name *"
 							className="p-2 rounded border"
 							required
+							disabled={submitting}
 						/>
 						<input
 							name="company"
@@ -232,6 +243,7 @@ export default function CorporativeCenters({ currentUserId = 1 }) {
 							onChange={handleChange}
 							placeholder="Company"
 							className="p-2 rounded border"
+							disabled={submitting}
 						/>
 						<input
 							name="address"
@@ -240,6 +252,7 @@ export default function CorporativeCenters({ currentUserId = 1 }) {
 							placeholder="Address *"
 							className="p-2 rounded border"
 							required
+							disabled={submitting}
 						/>
 						<input
 							name="phone"
@@ -247,6 +260,7 @@ export default function CorporativeCenters({ currentUserId = 1 }) {
 							onChange={handleChange}
 							placeholder="Phone"
 							className="p-2 rounded border"
+							disabled={submitting}
 						/>
 						<input
 							name="hours"
@@ -254,14 +268,24 @@ export default function CorporativeCenters({ currentUserId = 1 }) {
 							onChange={handleChange}
 							placeholder="Hours"
 							className="p-2 rounded border"
+							disabled={submitting}
 						/>
 					</div>
 
 					<div className="flex justify-evenly items-center mt-2">
-						<button type="submit" className={BUTTON_STYLE}>
-							Save Center
+						<button
+							type="submit"
+							className={BUTTON_STYLE}
+							disabled={submitting}
+						>
+							{submitting ? "Saving..." : "Save Center"}
 						</button>
-						<button type="button" onClick={cancelAdd} className={BUTTON_STYLE}>
+						<button
+							type="button"
+							onClick={cancelAdd}
+							className={BUTTON_STYLE}
+							disabled={submitting}
+						>
 							Cancel
 						</button>
 					</div>
@@ -284,12 +308,14 @@ export default function CorporativeCenters({ currentUserId = 1 }) {
 										onChange={handleChange}
 										className="p-2 rounded border"
 										required
+										disabled={submitting}
 									/>
 									<input
 										name="company"
 										value={form.company}
 										onChange={handleChange}
 										className="p-2 rounded border"
+										disabled={submitting}
 									/>
 									<input
 										name="address"
@@ -297,29 +323,37 @@ export default function CorporativeCenters({ currentUserId = 1 }) {
 										onChange={handleChange}
 										className="p-2 rounded border"
 										required
+										disabled={submitting}
 									/>
 									<input
 										name="phone"
 										value={form.phone}
 										onChange={handleChange}
 										className="p-2 rounded border"
+										disabled={submitting}
 									/>
 									<input
 										name="hours"
 										value={form.hours}
 										onChange={handleChange}
 										className="p-2 rounded border"
+										disabled={submitting}
 									/>
 								</div>
 
 								<div className="flex gap-3">
-									<button type="submit" className={BUTTON_STYLE}>
-										Save
+									<button
+										type="submit"
+										className={BUTTON_STYLE}
+										disabled={submitting}
+									>
+										{submitting ? "Saving..." : "Save"}
 									</button>
 									<button
 										type="button"
 										onClick={cancelEdit}
 										className={BUTTON_STYLE}
+										disabled={submitting}
 									>
 										Cancel
 									</button>

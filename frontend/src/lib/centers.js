@@ -13,11 +13,13 @@ export const listCenters = async () => {
 /**
  * Create a new center.
  * Payload should include at least: { location, created_by }
- * Other optional fields: location_url, time_open, contact
+ * Optional fields: name, company, location_url, time_open, contact
  * @param {Object} data
  * @returns {Promise<Object>}
  */
 export const createCenter = async (data) => {
+	// expected shape:
+	// { name?, company?, location, created_by, location_url?, time_open?, contact? }
 	const res = await api.post("/api/centers/", data);
 	return res.data;
 };
@@ -39,6 +41,7 @@ export const getCenter = async (id) => {
  * @returns {Promise<Object>}
  */
 export const updateCenter = async (id, data) => {
+	// allowed keys: name, company, location, location_url, time_open, contact, total_waste_collected
 	const res = await api.patch(`/api/centers/${id}`, data);
 	return res.data;
 };
@@ -46,9 +49,11 @@ export const updateCenter = async (id, data) => {
 /**
  * Delete a center by id
  * @param {number|string} id
- * @returns {Promise<null|Object>} returns nothing on 204, or data on other statuses
+ * @returns {Promise<boolean|Object>} returns true on 204, otherwise response data
  */
 export const deleteCenter = async (id) => {
 	const res = await api.delete(`/api/centers/${id}`);
-	return res;
+	// return true when deleted (204), otherwise return response data for caller to inspect
+	if (res.status === 204) return true;
+	return res.data;
 };

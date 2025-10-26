@@ -1,12 +1,41 @@
 # backend/app/routes/centers.py
-from flask import Blueprint, request, jsonify, make_response, current_app
+from flask import Blueprint, request, jsonify, make_response, current_app, g, session
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.extensions import db
-# import the model and give it a clear name
 from app.models.centers import centers as CentersModel
 
 centers_bp = Blueprint("centers", __name__, url_prefix="/api/centers")
+
+
+def _get_created_by_from_request(data: dict):
+    """
+    Try to determine created_by id from various sources:
+    1. data['created_by'] (explicit in payload)
+    2. g.current_user.id (if your auth sets g.current_user)
+    3. session.get('user_id') (if you store user id in session)
+    Returns int or None.
+    """
+    if not isinstance(data, dict):
+        return None
+    created_by = data.get("created_by")
+    if created_by:
+        try:
+            return int(created_by)
+        except (TypeError, ValueError):
+            return None
+    # try common places
+    try:
+        if hasattr(g, "current_user") and getattr(g.current_user, "id", None):
+            return int(g.current_user.id)
+    except Exception:
+        pass
+    try:
+        if session and session.get("user_id"):
+            return int(session.get("user_id"))
+    except Exception:
+        pass
+    return None
 
 
 @centers_bp.route("/", methods=["GET"])
@@ -18,14 +47,22 @@ def list_centers():
 
 @centers_bp.route("/", methods=["POST"])
 def create_center():
-    """Create a new center. Expects JSON with at least `location` and `created_by`."""
+    """Create a new center. Expects JSON with at least `location` and `created_by` (or inferable)."""
     if not request.is_json:
         return jsonify({"error": "Request must be JSON"}), 400
 
     data = request.get_json()
+
+    # If created_by missing, try to infer it
+    if "created_by" not in data or not data.get("created_by"):
+        inferred = _get_created_by_from_request(data)
+        if inferred:
+            data["created_by"] = inferred
+
     try:
         center = CentersModel.create_from_dict(data, commit=True)
     except ValueError as e:
+        # create_from_dict raises ValueError for missing required fields
         return jsonify({"error": str(e)}), 400
     except SQLAlchemyError:
         current_app.logger.exception("DB error creating center")
@@ -48,7 +85,7 @@ def get_center(center_id: int):
 
 @centers_bp.route("/<int:center_id>", methods=["PUT", "PATCH"])
 def update_center(center_id: int):
-    """Update a center. Accepts JSON with permitted fields."""
+    """Update a center. Accepts JSON with permitted fields (name, company, location, etc.)."""
     center = CentersModel.query.get(center_id)
     if not center:
         return jsonify({"error": "Center not found"}), 404
@@ -57,6 +94,7 @@ def update_center(center_id: int):
         return jsonify({"error": "Request must be JSON"}), 400
 
     data = request.get_json()
+
     try:
         center.update_from_dict(data, commit=True)
     except ValueError as e:

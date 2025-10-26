@@ -2,13 +2,16 @@ from datetime import datetime
 from typing import Optional, Dict, Any
 from app import db
 
+
 class centers(db.Model):
     """
-    Centre model.
+    Centers model.
 
     Fields:
       - id: primary key
-      - location: human-readable address/label
+      - name: optional human-friendly name for the center
+      - company: optional company/organisation
+      - location: human-readable address/label (required)
       - location_url: optional Google Maps URL or place link
       - created_by: foreign key to users.id (assumes a users table exists)
       - created_at: timestamp (UTC)
@@ -20,6 +23,8 @@ class centers(db.Model):
     __tablename__ = "centers"
 
     id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=True)
+    company = db.Column(db.String(255), nullable=True)
     location = db.Column(db.String(255), nullable=False)
     location_url = db.Column(db.String(500), nullable=True)
     created_by = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
@@ -29,12 +34,14 @@ class centers(db.Model):
     contact = db.Column(db.String(50), nullable=True)
 
     def __repr__(self) -> str:
-        return f"<Centre id={self.id} location={self.location!r}>"
+        return f"<Center id={self.id} name={self.name!r} location={self.location!r}>"
 
     def to_dict(self) -> Dict[str, Any]:
         """Return JSON-serializable representation."""
         return {
             "id": self.id,
+            "name": self.name,
+            "company": self.company,
             "location": self.location,
             "location_url": self.location_url,
             "created_by": self.created_by,
@@ -63,6 +70,8 @@ class centers(db.Model):
         cls,
         location: str,
         created_by: int,
+        name: Optional[str] = None,
+        company: Optional[str] = None,
         location_url: Optional[str] = None,
         time_open: Optional[str] = None,
         contact: Optional[str] = None,
@@ -70,21 +79,13 @@ class centers(db.Model):
         commit: bool = True,
     ) -> "centers":
         """
-        Create, add and (optionally) commit a new centre.
-
-        Example:
-            Centre.create(
-                location="Nairobi Market",
-                created_by=1,
-                contact="+254700000000",
-                time_open="Mon-Fri 09:00-17:00",
-                location_url="https://maps.google.com/..."
-            )
+        Create, add and (optionally) commit a new center.
         """
-        # normalize contact
         contact_norm = cls._normalize_contact(contact)
 
         centre = cls(
+            name=name,
+            company=company,
             location=location,
             created_by=created_by,
             location_url=location_url,
@@ -100,6 +101,8 @@ class centers(db.Model):
     @classmethod
     def create_from_dict(cls, data: Dict[str, Any], commit: bool = True) -> "centers":
         allowed = {
+            "name",
+            "company",
             "location",
             "created_by",
             "location_url",
@@ -118,6 +121,8 @@ class centers(db.Model):
 
     def update_from_dict(self, data: Dict[str, Any], commit: bool = True) -> "centers":
         allowed = {
+            "name",
+            "company",
             "location",
             "location_url",
             "time_open",
