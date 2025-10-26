@@ -17,7 +17,7 @@ class centers(db.Model):
       - contact: phone number as string (keeps + and leading zeros)
     """
 
-    __tablename__ = "centres"
+    __tablename__ = "centers"
 
     id = db.Column(db.Integer, primary_key=True)
     location = db.Column(db.String(255), nullable=False)
