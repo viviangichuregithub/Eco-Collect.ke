@@ -1,6 +1,6 @@
 "use client"
 import React, { useState, useEffect } from 'react'
-import apiService from '../lib/api'
+import apiService from '../lib/apiService'
 
 export default function CivilianCenters() {
   const [collectionCenters, setCollectionCenters] = useState([])
@@ -265,7 +265,7 @@ export default function CivilianCenters() {
           </div>
           <div className='text-sm text-gray-600'>
             {collectionCenters.length} centers found
-            {userLocation && ' • Location enabled'}
+            {userLocation && ' ??? Location enabled'}
           </div>
         </div>
       </div>

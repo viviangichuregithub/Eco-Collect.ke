@@ -20,7 +20,7 @@ const Toast = ({ type, message, onClose }) => (
     {type === "error" ? <XCircle size={20} /> : <CheckCircle size={20} />}
     <span className="flex-1">{message}</span>
     <button className="ml-2 font-bold" onClick={onClose}>
-      ✕
+      ???
     </button>
   </motion.div>
 );

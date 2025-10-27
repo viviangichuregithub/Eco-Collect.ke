@@ -1,6 +1,6 @@
 "use client"
 import React, { useState, useEffect } from 'react'
-import apiService from '../lib/api'
+import apiService from '../lib/apiService'
 
 export default function Upload() {
     const [selectedFile, setSelectedFile] = useState(null)

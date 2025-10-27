@@ -93,6 +93,32 @@ def logout():
 
 
 # -------------------------------
+# GET CURRENT USER (CHECK SESSION)
+# -------------------------------
+@auth_bp.route("/me", methods=["GET"])
+def get_current_user():
+    user_id = session.get("user_id")
+    
+    if not user_id:
+        return jsonify({"error": "Not authenticated"}), 401
+    
+    user = User.query.get(user_id)
+    if not user:
+        session.clear()
+        return jsonify({"error": "User not found"}), 401
+    
+    return jsonify({
+        "user": {
+            "id": user.id,
+            "user_name": user.user_name,
+            "email": user.email,
+            "role": user.role,
+            "point_score": user.point_score
+        }
+    }), 200
+
+
+# -------------------------------
 # FORGOT PASSWORD
 # -------------------------------
 @auth_bp.route("/forgot-password", methods=["POST"])

@@ -6,14 +6,15 @@ from werkzeug.utils import secure_filename
 import os
 import uuid
 from datetime import datetime
-from app.services.ai_classifier import WasteClassifier
+# Temporarily disabled AI classifier due to TensorFlow/Python 3.13 compatibility
+# from app.services.ai_classifier import WasteClassifier
 from app.models.uploads import Upload, CollectionCenter
 from app.models.user import User
 from app.extensions import db
 from functools import wraps
 
 uploads_bp = Blueprint('uploads', __name__)
-classifier = WasteClassifier()
+# classifier = WasteClassifier()  # Temporarily disabled
 
 # Configuration
 UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), '../../uploads')
@@ -143,8 +144,14 @@ def classify_waste(file_id):
         if not os.path.exists(upload.file_path):
             return jsonify({'error': 'File not found on disk'}), 404
         
-        # Perform AI classification
-        classification_result = classifier.classify_image(upload.file_path)
+        # Perform AI classification - TEMPORARILY DISABLED
+        # classification_result = classifier.classify_image(upload.file_path)
+        classification_result = {
+            'type': 'recyclable',
+            'confidence': 50,
+            'model_version': 'disabled',
+            'message': 'AI classifier temporarily disabled'
+        }
         
         # Update Upload record with classification results
         upload.waste_type = classification_result.get('type')
