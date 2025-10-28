@@ -1,3 +1,5 @@
+# Configuration settings for the EcoCollect application.
+# This file defines the configuration class and sets up the necessary environment variables.
 import os
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
