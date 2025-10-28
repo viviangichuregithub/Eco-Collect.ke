@@ -1,4 +1,4 @@
-# Eco-Collect.KE
+# Eco-Collect.ke
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
@@ -10,7 +10,7 @@
 
 ## Table of contents
 
-- [Eco-Collect.KE](#eco-collectke)
+- [Eco-Collect.ke](#eco-collectke)
   - [Table of contents](#table-of-contents)
   - [About](#about)
   - [Features](#features)
@@ -36,7 +36,7 @@
 
 ## About
 
-Eco-Collect.KE allows civilians to upload/capture photos of waste, get them classified by an AI model, and earn reward points when verified at collection centres managed by corporate users.
+Eco-Collect.ke allows civilians to upload/capture photos of waste, get them classified by an AI model, and earn reward points when verified at collection centres managed by corporate users.
 
 ---
 
