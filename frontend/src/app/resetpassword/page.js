@@ -1,16 +1,26 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { motion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import { resetPassword } from "../../lib/user";
 
-const ResetPasswordPage = () => {
+// Wrapper with Suspense
+export default function ResetPasswordPageWrapper() {
+  return (
+    <Suspense fallback={<div className="flex justify-center mt-20">Loading...</div>}>
+      <ResetPasswordPage />
+    </Suspense>
+  );
+}
+
+function ResetPasswordPage() {
   const router = useRouter();
   const params = useSearchParams();
   const token = params.get("token");
+
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
 
@@ -31,7 +41,7 @@ const ResetPasswordPage = () => {
     setError("");
     setSuccess("");
     try {
-      await resetPassword(token, values.newPassword); // call backend
+      await resetPassword(token, values.newPassword);
       setSuccess("Password successfully reset! Redirecting to login...");
       setTimeout(() => router.push("/auth"), 2000);
     } catch (err) {
@@ -106,6 +116,4 @@ const ResetPasswordPage = () => {
       </motion.div>
     </div>
   );
-};
-
-export default ResetPasswordPage;
+}
