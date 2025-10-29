@@ -3,6 +3,7 @@ from app.config import DevelopmentConfig
 from app.extensions import db, bcrypt, migrate, cors
 from flask_session import Session
 import os
+from flasgger import Swagger
 
 def create_app(config_class=DevelopmentConfig):
     app = Flask(__name__)
@@ -23,6 +24,17 @@ def create_app(config_class=DevelopmentConfig):
     db.init_app(app)
     bcrypt.init_app(app)
     migrate.init_app(app, db)
+    # Swagger / OpenAPI docs
+    swagger_template = {
+        "openapi": "3.0.2",
+        "info": {
+            "title": "Eco-Collect API",
+            "version": "1.0.0",
+            "description": "API documentation for Eco-Collect backend"
+        },
+        "servers": [{"url": "http://localhost:5000", "description": "Local dev server"}]
+    }
+    Swagger(app, template=swagger_template)
 
     # CORS with credentials - allow all headers for multipart/form-data
     cors.init_app(
