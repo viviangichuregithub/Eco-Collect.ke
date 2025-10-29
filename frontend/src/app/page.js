@@ -28,7 +28,7 @@ export default function HomePage() {
       <section
         id="home"
         className="relative h-screen flex items-center justify-center bg-cover bg-center"
-        style={{ backgroundImage: "url('/hero.svg')" }}
+        style={{ backgroundImage: "url('/bg.svg')" }}
       >
         <div className="absolute inset-0 bg-white/10"></div>
         <motion.div
@@ -65,7 +65,6 @@ export default function HomePage() {
         </p>
       </section>
 
-      {/* Team Section */}
       <section className="bg-white text-[#355E62] py-16">
         <h2 className="text-3xl font-bold text-center mb-12">Meet the Team</h2>
         <div className="flex flex-wrap justify-center gap-48 px-4">
@@ -88,14 +87,13 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Services Section */}
       <section
         id="services"
         className="bg-[#ECF1E6] text-[#355E62] py-24 px-6 flex flex-col md:flex-row items-center justify-center gap-12"
       >
         <div className="md:w-1/2">
           <Image
-            src="/recycle.svg"
+            src="/services.svg"
             alt="Eco Collect services"
             width={500}
             height={400}
@@ -140,19 +138,17 @@ export default function HomePage() {
       <p>Phone: +254 700 000 000</p>
     </div>
     <div>
-      {/* Newsletter header with bus logo */}
       <div className="flex items-center gap-2 mb-4">
         <Image
-          src="/bus-logo.svg" // replace with your bus image path
+          src="/bus-logo.svg" 
           alt="Bus Logo"
-          width={24}
-          height={24}
+          width={120}
+          height={36}
           className="object-contain"
         />
         <h3 className="font-bold">Newsletter</h3>
       </div>
       
-      {/* Newsletter input + button */}
       <form className="flex flex-col sm:flex-row items-center gap-2">
         <input
           type="email"

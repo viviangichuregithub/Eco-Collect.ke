@@ -117,7 +117,7 @@ class centers(db.Model):
         if "created_by" not in payload:
             raise ValueError("`created_by` is required")
 
-        return cls.create(commit=commit, **payload)  # type: ignore[arg-type]
+        return cls.create(commit=commit, **payload) 
 
     def update_from_dict(self, data: Dict[str, Any], commit: bool = True) -> "centers":
         allowed = {

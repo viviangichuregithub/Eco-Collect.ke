@@ -1,31 +1,25 @@
-// frontend/src/components/CorporativeCenters.jsx
+"use client"
 import React, { useEffect, useState } from "react";
-import {
-	listCenters,
-	createCenter,
-	updateCenter,
-	deleteCenter,
-} from "../lib/centers"; // adjust path if needed
+import { listCenters, createCenter, updateCenter, deleteCenter } from "../lib/centers";
 
 export default function CorporativeCenters({ currentUserId = 1 }) {
 	const [collectionCenters, setCollectionCenters] = useState([]);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState(null);
 
-	// UI state
 	const [isAdding, setIsAdding] = useState(false);
 	const [editingId, setEditingId] = useState(null);
+	const [searchTerm, setSearchTerm] = useState("");
 
-	// shared form state (used for both add & edit)
 	const [form, setForm] = useState({
 		name: "",
 		company: "",
 		address: "",
 		phone: "",
 		hours: "",
+		location_url: "",
 	});
 
-	// disable submit while request in flight
 	const [submitting, setSubmitting] = useState(false);
 
 	const BUTTON_STYLE =
@@ -33,7 +27,6 @@ export default function CorporativeCenters({ currentUserId = 1 }) {
 
 	useEffect(() => {
 		fetchCenters();
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
 	const fetchCenters = async () => {
@@ -41,14 +34,14 @@ export default function CorporativeCenters({ currentUserId = 1 }) {
 		setError(null);
 		try {
 			const data = await listCenters();
-			// normalize backend shape to frontend (we expect fields id, name, company, address, phone, hours)
 			const normalized = (data || []).map((c) => ({
 				id: c.id,
-				name: c.name || c.location_name || "", // prefer explicit name, fallback to location
+				name: c.name || c.location_name || "",
 				company: c.company || "",
 				address: c.location || "",
 				phone: c.contact || "",
 				hours: c.time_open || "",
+				location_url: c.location_url || "",
 				raw: c,
 			}));
 			setCollectionCenters(normalized);
@@ -67,13 +60,27 @@ export default function CorporativeCenters({ currentUserId = 1 }) {
 
 	// ADD
 	const openAdd = () => {
-		setForm({ name: "", company: "", address: "", phone: "", hours: "" });
+		setForm({
+			name: "",
+			company: "",
+			address: "",
+			phone: "",
+			hours: "",
+			location_url: "",
+		});
 		setIsAdding(true);
 		setEditingId(null);
 	};
 	const cancelAdd = () => {
 		setIsAdding(false);
-		setForm({ name: "", company: "", address: "", phone: "", hours: "" });
+		setForm({
+			name: "",
+			company: "",
+			address: "",
+			phone: "",
+			hours: "",
+			location_url: "",
+		});
 	};
 	const handleAdd = async (e) => {
 		e.preventDefault();
@@ -82,14 +89,12 @@ export default function CorporativeCenters({ currentUserId = 1 }) {
 			return;
 		}
 
-		// Map frontend fields to backend payload:
-		// backend fields: { name, company, location, created_by, location_url?, time_open, contact }
 		const payload = {
 			name: form.name.trim(),
 			company: form.company.trim() || null,
 			location: form.address.trim(),
 			created_by: currentUserId,
-			location_url: "", // optional
+			location_url: form.location_url.trim() || null,
 			time_open: form.hours.trim() || null,
 			contact: form.phone.trim() || null,
 		};
@@ -97,7 +102,6 @@ export default function CorporativeCenters({ currentUserId = 1 }) {
 		try {
 			setSubmitting(true);
 			const created = await createCenter(payload);
-			// Map created back to frontend shape
 			const mapped = {
 				id: created.id,
 				name: created.name || payload.name,
@@ -105,6 +109,7 @@ export default function CorporativeCenters({ currentUserId = 1 }) {
 				address: created.location || payload.location,
 				phone: created.contact || payload.contact || "",
 				hours: created.time_open || payload.time_open || "",
+				location_url: created.location_url || payload.location_url || "",
 				raw: created,
 			};
 			setCollectionCenters((prev) => [mapped, ...prev]);
@@ -127,11 +132,19 @@ export default function CorporativeCenters({ currentUserId = 1 }) {
 			address: center.address || "",
 			phone: center.phone || "",
 			hours: center.hours || "",
+			location_url: center.location_url || "",
 		});
 	};
 	const cancelEdit = () => {
 		setEditingId(null);
-		setForm({ name: "", company: "", address: "", phone: "", hours: "" });
+		setForm({
+			name: "",
+			company: "",
+			address: "",
+			phone: "",
+			hours: "",
+			location_url: "",
+		});
 	};
 	const saveEdit = async (e) => {
 		e.preventDefault();
@@ -145,6 +158,7 @@ export default function CorporativeCenters({ currentUserId = 1 }) {
 			company: form.company.trim() || null,
 			location: form.address.trim(),
 			time_open: form.hours.trim() || null,
+			location_url: form.location_url.trim() || null,
 			contact: form.phone.trim() || null,
 		};
 
@@ -161,10 +175,12 @@ export default function CorporativeCenters({ currentUserId = 1 }) {
 								address: updated.location || payload.location,
 								phone: updated.contact || payload.contact || "",
 								hours: updated.time_open || payload.time_open || "",
+								location_url:
+									updated.location_url || payload.location_url || "",
 								raw: updated,
 						  }
-						: c,
-				),
+						: c
+				)
 			);
 			cancelEdit();
 		} catch (err) {
@@ -179,9 +195,7 @@ export default function CorporativeCenters({ currentUserId = 1 }) {
 	const handleDelete = async (id) => {
 		const center = collectionCenters.find((c) => c.id === id);
 		if (!center) return;
-		const confirmed = window.confirm(
-			`Delete "${center.name}"? This cannot be undone.`,
-		);
+		const confirmed = window.confirm(`Delete "${center.name}"?`);
 		if (!confirmed) return;
 
 		try {
@@ -190,7 +204,6 @@ export default function CorporativeCenters({ currentUserId = 1 }) {
 				setCollectionCenters((prev) => prev.filter((c) => c.id !== id));
 				if (editingId === id) cancelEdit();
 			} else {
-				// backend returned something — fallback to refresh list
 				await fetchCenters();
 			}
 		} catch (err) {
@@ -199,9 +212,27 @@ export default function CorporativeCenters({ currentUserId = 1 }) {
 		}
 	};
 
+	const getDirections = (center) => {
+		if (center.location_url && center.location_url.trim() !== "") {
+			window.open(center.location_url, "_blank");
+		} else if (center.address) {
+			const address = encodeURIComponent(center.address);
+			window.open(`https://www.google.com/maps/search/${address}`, "_blank");
+		} else {
+			alert("No location available for this center.");
+		}
+	};
+
+	// FILTER by company or location
+	const filteredCenters = collectionCenters.filter(
+		(c) =>
+			c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+			c.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
+			c.address.toLowerCase().includes(searchTerm.toLowerCase())
+	);
+
 	return (
 		<div className="w-full max-w-4xl mx-auto p-8 bg-white text-black text-poppins">
-			{/* Header Section */}
 			<div className="mb-4">
 				<h1 className="text-[36px] font-lightbold text-[#355E62] mb-2">
 					Collection Centers
@@ -209,9 +240,14 @@ export default function CorporativeCenters({ currentUserId = 1 }) {
 				<p className="text-gray-500 text-[14px]">
 					Manage your {collectionCenters.length} collection centers
 				</p>
-
-				{/* ADD BUTTON */}
-				<div className="mt-4">
+				<div className="mt-4 flex flex-col md:flex-row gap-2">
+					<input
+						type="text"
+						value={searchTerm}
+						onChange={(e) => setSearchTerm(e.target.value)}
+						placeholder="Search by location or company..."
+						className="p-2 rounded border flex-1"
+					/>
 					<button onClick={openAdd} className={BUTTON_STYLE}>
 						Add Center
 					</button>
@@ -221,7 +257,7 @@ export default function CorporativeCenters({ currentUserId = 1 }) {
 			{loading && <p className="text-gray-500">Loading centers…</p>}
 			{error && <p className="text-red-500">{error}</p>}
 
-			{/* Inline Add Form */}
+			{/* ADD FORM */}
 			{isAdding && (
 				<form
 					onSubmit={handleAdd}
@@ -235,7 +271,6 @@ export default function CorporativeCenters({ currentUserId = 1 }) {
 							placeholder="Name *"
 							className="p-2 rounded border"
 							required
-							disabled={submitting}
 						/>
 						<input
 							name="company"
@@ -243,7 +278,6 @@ export default function CorporativeCenters({ currentUserId = 1 }) {
 							onChange={handleChange}
 							placeholder="Company"
 							className="p-2 rounded border"
-							disabled={submitting}
 						/>
 						<input
 							name="address"
@@ -252,7 +286,6 @@ export default function CorporativeCenters({ currentUserId = 1 }) {
 							placeholder="Address *"
 							className="p-2 rounded border"
 							required
-							disabled={submitting}
 						/>
 						<input
 							name="phone"
@@ -260,7 +293,6 @@ export default function CorporativeCenters({ currentUserId = 1 }) {
 							onChange={handleChange}
 							placeholder="Phone"
 							className="p-2 rounded border"
-							disabled={submitting}
 						/>
 						<input
 							name="hours"
@@ -268,33 +300,36 @@ export default function CorporativeCenters({ currentUserId = 1 }) {
 							onChange={handleChange}
 							placeholder="Hours"
 							className="p-2 rounded border"
-							disabled={submitting}
+						/>
+						<input
+							name="location_url"
+							value={form.location_url}
+							onChange={handleChange}
+							placeholder="Google Maps URL"
+							className="p-2 rounded border col-span-2"
 						/>
 					</div>
 
 					<div className="flex justify-evenly items-center mt-2">
-						<button
-							type="submit"
-							className={BUTTON_STYLE}
-							disabled={submitting}
-						>
+						<button type="submit" className={BUTTON_STYLE}>
 							{submitting ? "Saving..." : "Save Center"}
 						</button>
-						<button
-							type="button"
-							onClick={cancelAdd}
-							className={BUTTON_STYLE}
-							disabled={submitting}
-						>
+						<button type="button" onClick={cancelAdd} className={BUTTON_STYLE}>
 							Cancel
 						</button>
 					</div>
 				</form>
 			)}
 
-			{/* Collection Centers Grid */}
+			{/* LIST */}
 			<div className="space-y-4">
-				{collectionCenters.map((center) => (
+				{filteredCenters.length === 0 && !loading && (
+					<p className="text-center text-gray-500">
+						No collection centers found.
+					</p>
+				)}
+
+				{filteredCenters.map((center) => (
 					<div
 						key={center.id}
 						className="bg-[#ECF1E6] rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow duration-200"
@@ -308,14 +343,12 @@ export default function CorporativeCenters({ currentUserId = 1 }) {
 										onChange={handleChange}
 										className="p-2 rounded border"
 										required
-										disabled={submitting}
 									/>
 									<input
 										name="company"
 										value={form.company}
 										onChange={handleChange}
 										className="p-2 rounded border"
-										disabled={submitting}
 									/>
 									<input
 										name="address"
@@ -323,38 +356,33 @@ export default function CorporativeCenters({ currentUserId = 1 }) {
 										onChange={handleChange}
 										className="p-2 rounded border"
 										required
-										disabled={submitting}
 									/>
 									<input
 										name="phone"
 										value={form.phone}
 										onChange={handleChange}
 										className="p-2 rounded border"
-										disabled={submitting}
 									/>
 									<input
 										name="hours"
 										value={form.hours}
 										onChange={handleChange}
 										className="p-2 rounded border"
-										disabled={submitting}
+									/>
+									<input
+										name="location_url"
+										value={form.location_url}
+										onChange={handleChange}
+										className="p-2 rounded border col-span-2"
+										placeholder="Google Maps URL"
 									/>
 								</div>
 
 								<div className="flex gap-3">
-									<button
-										type="submit"
-										className={BUTTON_STYLE}
-										disabled={submitting}
-									>
+									<button type="submit" className={BUTTON_STYLE}>
 										{submitting ? "Saving..." : "Save"}
 									</button>
-									<button
-										type="button"
-										onClick={cancelEdit}
-										className={BUTTON_STYLE}
-										disabled={submitting}
-									>
+									<button type="button" onClick={cancelEdit} className={BUTTON_STYLE}>
 										Cancel
 									</button>
 								</div>
@@ -368,73 +396,36 @@ export default function CorporativeCenters({ currentUserId = 1 }) {
 									<p className="text-sm text-gray-600">{center.company}</p>
 								</div>
 
-								<div className="space-y-2">
-									<div className="flex items-center text-gray-600">
-										<svg
-											className="w-4 h-4 mr-2 flex-shrink-0"
-											fill="currentColor"
-											viewBox="0 0 20 20"
-										>
-											<path
-												fillRule="evenodd"
-												d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
-												clipRule="evenodd"
-											/>
-										</svg>
-										<span className="text-sm">{center.address}</span>
-									</div>
+								<div className="space-y-2 text-gray-600 text-sm">
+									<div>📍 {center.address}</div>
+									<div>📞 {center.phone}</div>
+									<div>🕓 {center.hours}</div>
+								</div>
 
-									<div className="flex items-center text-gray-600">
-										<svg
-											className="w-4 h-4 mr-2 flex-shrink-0"
-											fill="currentColor"
-											viewBox="0 0 20 20"
-										>
-											<path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
-										</svg>
-										<span className="text-sm">{center.phone}</span>
-									</div>
-
-									<div className="flex items-center text-gray-600">
-										<svg
-											className="w-4 h-4 mr-2 flex-shrink-0"
-											fill="currentColor"
-											viewBox="0 0 20 20"
-										>
-											<path
-												fillRule="evenodd"
-												d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
-												clipRule="evenodd"
-											/>
-										</svg>
-										<span className="text-sm">{center.hours}</span>
-									</div>
-
-									<div className="mt-4 flex gap-3">
-										<button
-											onClick={() => startEdit(center)}
-											className={BUTTON_STYLE}
-										>
-											Edit
-										</button>
-										<button
-											onClick={() => handleDelete(center.id)}
-											className={BUTTON_STYLE}
-										>
-											Delete
-										</button>
-									</div>
+								<div className="mt-4 flex gap-3">
+									<button
+										onClick={() => getDirections(center)}
+										className={BUTTON_STYLE}
+									>
+										Get Directions
+									</button>
+									<button
+										onClick={() => startEdit(center)}
+										className={BUTTON_STYLE}
+									>
+										Edit
+									</button>
+									<button
+										onClick={() => handleDelete(center.id)}
+										className={BUTTON_STYLE}
+									>
+										Delete
+									</button>
 								</div>
 							</>
 						)}
 					</div>
 				))}
-
-				{collectionCenters.length === 0 && !loading && (
-					<p className="text-center text-gray-500">
-						No collection centers available.
-					</p>
-				)}
 			</div>
 		</div>
 	);

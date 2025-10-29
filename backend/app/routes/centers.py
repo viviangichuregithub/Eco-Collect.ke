@@ -9,13 +9,7 @@ centers_bp = Blueprint("centers", __name__, url_prefix="/api/centers")
 
 
 def _get_created_by_from_request(data: dict):
-    """
-    Try to determine created_by id from various sources:
-    1. data['created_by'] (explicit in payload)
-    2. g.current_user.id (if your auth sets g.current_user)
-    3. session.get('user_id') (if you store user id in session)
-    Returns int or None.
-    """
+   
     if not isinstance(data, dict):
         return None
     created_by = data.get("created_by")

@@ -1,59 +1,90 @@
-// frontend/src/lib/centers.js
-import api from "./api";
+import api from "./api"
 
-/**
- * Fetch all centers
- * @returns {Promise<Array>}
- */
-export const listCenters = async () => {
-	const res = await api.get("/api/centers/");
-	return res.data;
-};
+// -------------------------------
+// AUTH HELPERS
+// -------------------------------
 
-/**
- * Create a new center.
- * Payload should include at least: { location, created_by }
- * Optional fields: name, company, location_url, time_open, contact
- * @param {Object} data
- * @returns {Promise<Object>}
- */
-export const createCenter = async (data) => {
-	// expected shape:
-	// { name?, company?, location, created_by, location_url?, time_open?, contact? }
-	const res = await api.post("/api/centers/", data);
-	return res.data;
-};
+export const forgotPassword = async (email) => {
+  const res = await api.post("/auth/forgot-password", { email }, { withCredentials: true })
+  return res.data
+}
 
-/**
- * Get a single center by id
- * @param {number|string} id
- * @returns {Promise<Object>}
- */
-export const getCenter = async (id) => {
-	const res = await api.get(`/api/centers/${id}`);
-	return res.data;
-};
+export const resetPassword = async (token, newPassword) => {
+  const res = await api.post(`/auth/reset-password/${token}`, { new_password: newPassword }, { withCredentials: true })
+  return res.data
+}
 
-/**
- * Update a center (partial or full)
- * @param {number|string} id
- * @param {Object} data
- * @returns {Promise<Object>}
- */
-export const updateCenter = async (id, data) => {
-	// allowed keys: name, company, location, location_url, time_open, contact, total_waste_collected
-	const res = await api.patch(`/api/centers/${id}`, data);
-	return res.data;
-};
+// -------------------------------
+// PROFILE FUNCTIONS
+// -------------------------------
 
-/**
- * Delete a center by id
- * @param {number|string} id
- * @returns {Promise<boolean|Object>} returns true on 204, otherwise response data
- */
-export const deleteCenter = async (id) => {
-	const res = await api.delete(`/api/centers/${id}`);
-	// return true when deleted (204), otherwise return response data for caller to inspect
-	if (res.status === 204) return true;
-	return res.data;
-};
+export const getCurrentUser = async () => {
+  const res = await api.get("/profile/me", { withCredentials: true })
+  return res.data
+}
+
+export const updateProfile = async (data) => {
+  const res = await api.put("/profile/update", data, { withCredentials: true })
+  return res.data
+}
+
+// ✅ Upload profile image
+export const uploadProfileImage = async (file) => {
+  const formData = new FormData()
+  formData.append("image", file)
+
+  try {
+    const res = await api.post("/profile/upload-avatar", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+      withCredentials: true,
+    })
+    return res.data
+  } catch (err) {
+    console.error("Failed to upload avatar:", err)
+    throw err
+  }
+}
+
+export const uploadUserAvatar = uploadProfileImage
+
+// Get user points
+export const getUserPoints = async () => {
+  const res = await api.get("/auth/me", { withCredentials: true })
+  return res.data.points || 0
+}
+
+// ✅ Download user report (PDF)
+export const downloadUserReport = async () => {
+  try {
+    const res = await api.get("/profile/report", { responseType: "blob", withCredentials: true })
+
+    const contentDisposition = res.headers["content-disposition"]
+    const fileNameMatch = contentDisposition?.match(/filename="(.+)"/)
+    const fileName = fileNameMatch ? fileNameMatch[1] : "eco_collect_report.pdf"
+
+    const url = window.URL.createObjectURL(new Blob([res.data]))
+    const link = document.createElement("a")
+    link.href = url
+    link.setAttribute("download", fileName)
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+  } catch (error) {
+    console.error("Error downloading report:", error)
+    alert("Failed to download report")
+  }
+}
+
+// -------------------------------
+// LOGOUT
+// -------------------------------
+export const logout = async () => {
+  try {
+    await api.post("/auth/logout", {}, { withCredentials: true })
+    localStorage.removeItem("token")
+    window.location.href = "/auth"
+  } catch (err) {
+    console.error("Logout failed:", err)
+    throw err
+  }
+}
