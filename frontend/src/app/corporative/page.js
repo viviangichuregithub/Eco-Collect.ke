@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Logo from "../Logo.svg";
-import CorporativeNavBar from "@/components/CorporativeNavBar";
+import CorporativeNavBar from "../../components/CorporativeNavBar";
 import { getCurrentUser, logout } from "../../lib/user";
 
 export default function CorporativePage() {
