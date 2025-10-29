@@ -13,17 +13,46 @@ centers_bp = Blueprint('centers', __name__)
 def get_collection_centers():
     """
     Get all active collection centers
-    Supports filtering and searching
+    ---
+    tags:
+      - Centers
+    parameters:
+      - in: query
+        name: search
+        type: string
+        description: Search term to filter centers by name or address
+      - in: query
+        name: type
+        type: string
+        description: Filter centers by accepted waste type
+      - in: query
+        name: active
+        type: boolean
+        description: Whether to include only active centers (default: true)
+    responses:
+      200:
+        description: A list of collection centers
+        schema:
+          type: object
+          properties:
+            centers:
+              type: array
+              items:
+                type: object
+            total:
+              type: integer
+      500:
+        description: Server error
     """
     try:
         # Query parameters
         search = request.args.get('search', '').strip()
         accepted_type = request.args.get('type')
         is_active = request.args.get('active', 'true').lower() == 'true'
-        
+
         # Build query
         query = CollectionCenter.query.filter_by(is_active=is_active)
-        
+
         # Search by name or address
         if search:
             search_pattern = f"%{search}%"
@@ -33,25 +62,25 @@ def get_collection_centers():
                     CollectionCenter.address.ilike(search_pattern)
                 )
             )
-        
+
         # Filter by accepted waste type
         if accepted_type:
             # JSON containment query for accepted_types array
             query = query.filter(
                 CollectionCenter.accepted_types.contains([accepted_type])
             )
-        
+
         # Get all matching centers
         centers = query.order_by(CollectionCenter.name).all()
-        
+
         # Convert to dict
         centers_data = [center.to_dict() for center in centers]
-        
+
         return jsonify({
             'centers': centers_data,
             'total': len(centers_data)
         }), 200
-        
+
     except Exception as e:
         print(f"Get centers error: {str(e)}")
         import traceback
@@ -62,7 +91,27 @@ def get_collection_centers():
 
 @centers_bp.route('/<int:center_id>', methods=['GET'])
 def get_center_by_id(center_id):
-    """Get detailed information about a specific collection center"""
+    """
+    Get detailed information about a specific collection center
+    ---
+    tags:
+        - Centers
+    parameters:
+        - in: path
+            name: center_id
+            required: true
+            type: integer
+            description: ID of the collection center
+    responses:
+        200:
+            description: Center details
+            schema:
+                type: object
+        404:
+            description: Center not found
+        500:
+            description: Server error
+    """
     try:
         center = CollectionCenter.query.get(center_id)
         
@@ -81,7 +130,33 @@ def get_center_by_id(center_id):
 def get_nearby_centers():
     """
     Get collection centers near a specific location
-    Query params: lat, lng, radius (in km, default 10)
+    ---
+    tags:
+        - Centers
+    parameters:
+        - in: query
+            name: lat
+            required: true
+            type: number
+            description: Latitude of search location
+        - in: query
+            name: lng
+            required: true
+            type: number
+            description: Longitude of search location
+        - in: query
+            name: radius
+            type: number
+            description: Search radius in kilometers (default 10)
+    responses:
+        200:
+            description: Nearby centers
+            schema:
+                type: object
+        400:
+            description: Missing parameters
+        500:
+            description: Server error
     """
     try:
         latitude = request.args.get('lat', type=float)
@@ -133,6 +208,42 @@ def get_nearby_centers():
 def create_center():
     """
     Create a new collection center (admin only)
+    ---
+    tags:
+        - Centers
+    parameters:
+        - in: body
+            name: body
+            required: true
+            schema:
+                type: object
+                required:
+                    - name
+                    - address
+                properties:
+                    name:
+                        type: string
+                    address:
+                        type: string
+                    latitude:
+                        type: number
+                    longitude:
+                        type: number
+                    phone:
+                        type: string
+                    email:
+                        type: string
+                    accepted_types:
+                        type: array
+                        items:
+                            type: string
+    responses:
+        201:
+            description: Created
+        400:
+            description: Validation error
+        500:
+            description: Server error
     """
     try:
         data = request.get_json()
