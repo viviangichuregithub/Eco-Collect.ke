@@ -4,28 +4,39 @@ import Image from "next/image"
 import { useRouter } from "next/navigation"
 import Logo from "../Logo.svg"
 import Nav from "../../components/CivilianNavBar"
-import { getCurrentUser, logout } from "../../lib/user.js"
+import { useAuth } from "../../context/AuthContext"
 
 export default function Page() {
-  const [user, setUser] = useState(null)
+  const { user, loading, logout: authLogout } = useAuth()
   const router = useRouter()
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const data = await getCurrentUser()
-        setUser(data)
-      } catch (err) {
-        console.error("Failed to fetch user:", err)
-        router.replace("/auth") 
-      }
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace("/auth")
     }
-    fetchUser()
-  }, [router])
+  }, [user, loading, router])
+
+  // Prevent hydration mismatch by not rendering until mounted
+  if (!mounted || loading) {
+    return (
+      <div className="w-[100dvw] h-[100dvh] flex items-center justify-center">
+        <div className="text-gray-600">Loading...</div>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return null
+  }
 
   const handleLogout = async () => {
     try {
-      await logout()
+      await authLogout()
       router.replace("/auth") 
     } catch (err) {
       console.error("Logout failed:", err)
@@ -45,14 +56,14 @@ export default function Page() {
           />
           {user && (
             <h4 className="text-[#717182] text-[16px] font-medium mt-1">
-              Welcome, {user.name}
+              Welcome, {user.user_name}
             </h4>
           )}
         </div>
 
         <div className="pointCard bg-[#FCFEF7] text-black flex flex-col w-40 h-16 border-[1px] border-gray-300 px-2 py-2 ml-auto mr-2 shadow-[rgba(0,0,0,0.12)0px 1px 3px, rgba(0,0,0,0.24)0px 1px 2px]">
           <h4 className="text-[14px] font-light">Points Balance</h4>
-          <h2 className="text-[18px] font-semibold">250</h2>
+          <h2 className="text-[18px] font-semibold">{user?.point_score || 0}</h2>
         </div>
 
         <button

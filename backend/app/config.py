@@ -38,6 +38,12 @@ class Config:
     # PAYLOAD / JSON SETTINGS
     # -------------------------------
     MAX_CONTENT_LENGTH = 10 * 1024 * 1024  # 10 MB (for JSON / image uploads)
+    
+    # -------------------------------
+    # FILE UPLOADS
+    # -------------------------------
+    UPLOAD_FOLDER = os.path.join(os.path.dirname(BASE_DIR), "uploads")
+    ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
     JSON_AS_ASCII = False  # Ensure UTF-8 encoding
     JSON_SORT_KEYS = False  # Keep response fields in readable order
 

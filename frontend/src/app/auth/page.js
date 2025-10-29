@@ -122,7 +122,7 @@ export default function AuthPage() {
       <div className="flex h-screen w-screen overflow-hidden bg-[#ECF1E6]">
         {/* Left Image */}
         <div
-          className="flex-1 h-full bg-contain bg-center bg-left bg-no-repeat"
+          className="flex-1 h-full bg-contain bg-left bg-no-repeat"
           style={{ backgroundImage: "url('/auth-bg.jpeg')" }}
         />
 

@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+venv/
+venv/
+env/
+ENV/
+
+# Instance / runtime artifacts
+instance/
+backend/uploads/
+
+# Logs
+*.log
+*.out
+
+# Node / frontend
+node_modules/
+frontend/.next/
+
+# Editor
+.vscode/
+.DS_Store
+
+# dotenv
+.env
+
+# pytest
+.pytest_cache/

@@ -1,20 +1,19 @@
 """
 Upload routes for waste photo handling and AI classification
 """
-from flask import Blueprint, request, jsonify, g
+from flask import Blueprint, request, jsonify, g, session
 from werkzeug.utils import secure_filename
 import os
 import uuid
 from datetime import datetime
-# Temporarily disabled AI classifier due to TensorFlow/Python 3.13 compatibility
-# from app.services.ai_classifier import WasteClassifier
+from app.services.ai_classifier import WasteClassifier
 from app.models.uploads import Upload, CollectionCenter
 from app.models.user import User
 from app.extensions import db
 from functools import wraps
 
 uploads_bp = Blueprint('uploads', __name__)
-# classifier = WasteClassifier()  # Temporarily disabled
+classifier = WasteClassifier()  # Uses heuristic algorithm (no TensorFlow needed)
 
 # Configuration
 UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), '../../uploads')
@@ -30,29 +29,20 @@ def allowed_file(filename):
 
 def get_current_user_id():
     """
-    Get current user ID from session/token
-    TODO: Implement proper authentication
-    For now, returns a default user ID or creates a test user
+    Get current user ID from session (matches auth system)
     """
-    # Temporary: Return user_id from request header or default to 1
-    user_id = request.headers.get('X-User-ID')
+    user_id = session.get('user_id')
     
-    if user_id:
-        return int(user_id)
+    if not user_id:
+        # Fallback to header for backward compatibility
+        user_id = request.headers.get('X-User-ID')
+        if user_id:
+            return int(user_id)
+        
+        # No user found
+        return None
     
-    # For development: ensure at least one user exists
-    test_user = User.query.filter_by(email='test@ecocollect.ke').first()
-    if not test_user:
-        test_user = User(
-            user_name='test_user',
-            email='test@ecocollect.ke',
-            role='civilian'
-        )
-        test_user.set_password('test123')
-        db.session.add(test_user)
-        db.session.commit()
-    
-    return test_user.id
+    return user_id
 
 @uploads_bp.route('/photo', methods=['POST'])
 def upload_photo():
@@ -63,7 +53,12 @@ def upload_photo():
         
         # Debug logging
         print(f"DEBUG: Request files: {request.files}")
-        print(f"DEBUG: User ID: {user_id}")
+        print(f"DEBUG: User ID from session: {user_id}")
+        print(f"DEBUG: Session data: {session}")
+        
+        # Require authentication
+        if not user_id:
+            return jsonify({'error': 'Unauthorized - please log in'}), 401
         
         # Check if file is present in request
         if 'file' not in request.files:
@@ -144,14 +139,8 @@ def classify_waste(file_id):
         if not os.path.exists(upload.file_path):
             return jsonify({'error': 'File not found on disk'}), 404
         
-        # Perform AI classification - TEMPORARILY DISABLED
-        # classification_result = classifier.classify_image(upload.file_path)
-        classification_result = {
-            'type': 'recyclable',
-            'confidence': 50,
-            'model_version': 'disabled',
-            'message': 'AI classifier temporarily disabled'
-        }
+        # Perform AI classification using color-based heuristic algorithm
+        classification_result = classifier.classify_image(upload.file_path)
         
         # Update Upload record with classification results
         upload.waste_type = classification_result.get('type')

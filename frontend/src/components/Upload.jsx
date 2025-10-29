@@ -1,8 +1,10 @@
 "use client"
 import React, { useState, useEffect } from 'react'
 import apiService from '../lib/apiService'
+import { useAuth } from '../context/AuthContext'
 
 export default function Upload() {
+    const { refreshUser } = useAuth()
     const [selectedFile, setSelectedFile] = useState(null)
     const [previewUrl, setPreviewUrl] = useState(null)
     const [uploadedFileId, setUploadedFileId] = useState(null)
@@ -195,6 +197,10 @@ export default function Upload() {
             
             // Success feedback
             alert(`Submission saved successfully! You earned ${response.points_earned} points.`)
+            
+            // Refresh user data to update points display
+            await refreshUser()
+            
             resetForm()
             
         } catch (error) {

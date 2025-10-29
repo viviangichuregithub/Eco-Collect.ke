@@ -1,8 +1,10 @@
 "use client"
 import React, { useState, useEffect } from 'react'
 import apiService from '../lib/apiService'
+import { useAuth } from '../context/AuthContext'
 
 export default function History() {
+  const { user, loading: authLoading } = useAuth()
   const [submissionHistory, setSubmissionHistory] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -23,27 +25,49 @@ export default function History() {
 
   // Load submission history on component mount and when filters change
   useEffect(() => {
-    loadSubmissionHistory()
-  }, [filters, pagination.page])
+    // Only load history if user is authenticated
+    if (!authLoading && user) {
+      loadSubmissionHistory()
+    } else if (!authLoading && !user) {
+      setError('Please log in to view your submission history')
+      setLoading(false)
+    }
+  }, [filters, pagination.page, user, authLoading])
 
   const loadSubmissionHistory = async () => {
     setLoading(true)
     setError(null)
 
     try {
-      const queryFilters = {
-        ...filters,
-        status: filters.status !== 'all' ? filters.status : undefined,
-        type: filters.type !== 'all' ? filters.type : undefined,
-        date_range: filters.dateRange !== 'all' ? filters.dateRange : undefined,
-        sort_by: filters.sortBy
+      // Build query filters - only include non-'all' values
+      const queryFilters = {}
+      
+      if (filters.status && filters.status !== 'all') {
+        queryFilters.status = filters.status
+      }
+      
+      if (filters.type && filters.type !== 'all') {
+        queryFilters.type = filters.type
+      }
+      
+      if (filters.dateRange && filters.dateRange !== 'all') {
+        queryFilters.date_range = filters.dateRange
+      }
+      
+      if (filters.sortBy) {
+        queryFilters.sort_by = filters.sortBy
       }
 
+      console.log('Fetching submission history with filters:', queryFilters)
+      
       const response = await apiService.getSubmissionHistory(
         pagination.page,
         pagination.limit,
         queryFilters
       )
+
+      console.log('Submission history response:', response)
+      console.log('Number of submissions:', response.submissions?.length || 0)
 
       // Backend returns { submissions: [...], total, page, limit, pages }
       const submissionsWithImages = (response.submissions || []).map(submission => ({
@@ -60,8 +84,13 @@ export default function History() {
         total: response.total || 0,
         totalPages: response.pages || Math.ceil((response.total || 0) / prev.limit)
       }))
+      
+      console.log('Updated submission history state:', submissionsWithImages)
+      console.log('Updated pagination:', {total: response.total, pages: response.pages})
     } catch (error) {
       console.error('Failed to load submission history:', error)
+      console.error('Error details:', error.response?.data)
+      console.error('Error status:', error.response?.status)
       setError('Failed to load submission history. Please try again.')
     } finally {
       setLoading(false)

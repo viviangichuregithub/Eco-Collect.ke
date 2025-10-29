@@ -2,7 +2,7 @@
 Submission routes for tracking waste submissions using database models
 """
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, session
 from datetime import datetime
 
 from app.models.uploads import Upload
@@ -14,26 +14,20 @@ submissions_bp = Blueprint('submissions', __name__)
 
 def get_current_user_id():
     """
-    Get current user ID - temporary implementation
-    Must match the logic in uploads.py to ensure same user_id
+    Get current user ID from session (matches auth system)
     """
-    user_id = request.headers.get('X-User-ID')
-    if user_id:
-        return int(user_id)
+    user_id = session.get('user_id')
     
-    # For development: ensure at least one user exists (same as uploads.py)
-    test_user = User.query.filter_by(email='test@ecocollect.ke').first()
-    if not test_user:
-        test_user = User(
-            user_name='test_user',
-            email='test@ecocollect.ke',
-            role='civilian'
-        )
-        test_user.set_password('test123')
-        db.session.add(test_user)
-        db.session.commit()
+    if not user_id:
+        # Fallback to header for backward compatibility
+        user_id = request.headers.get('X-User-ID')
+        if user_id:
+            return int(user_id)
+        
+        # No user found
+        return None
     
-    return test_user.id
+    return user_id
 
 
 @submissions_bp.route('', methods=['POST'])
@@ -45,6 +39,15 @@ def create_submission():
     try:
         data = request.get_json()
         user_id = get_current_user_id()
+        
+        # Debug logging
+        print(f"DEBUG /submissions POST: user_id={user_id}")
+        print(f"DEBUG session: {session}")
+        print(f"DEBUG data: {data}")
+        
+        # Require authentication
+        if not user_id:
+            return jsonify({'error': 'Unauthorized - please log in'}), 401
         
         # Validate required fields
         if not data.get('file_id'):
@@ -83,11 +86,29 @@ def create_submission():
         if upload.waste_type and upload.weight:
             upload.points_earned = Upload.calculate_points(upload.waste_type, upload.weight)
             upload.points_status = 'pending'
+            
+            # Debug points calculation
+            print(f"DEBUG: Points calculation - waste_type={upload.waste_type}, weight={upload.weight}, points_earned={upload.points_earned}")
+            
+            # Update user's total points
+            user = User.query.get(user_id)
+            if user:
+                old_points = user.point_score or 0
+                user.point_score = old_points + upload.points_earned
+                print(f"DEBUG: Updated user points - old={old_points}, earned={upload.points_earned}, new={user.point_score}")
+            else:
+                print(f"ERROR: User not found with id={user_id}")
+        else:
+            print(f"WARNING: Cannot calculate points - waste_type={upload.waste_type}, weight={upload.weight}")
         
         upload.submitted_at = datetime.utcnow()
         upload.status = 'pending'
         
+        print(f"DEBUG: Setting submitted_at={upload.submitted_at}, status={upload.status}")
+        
         db.session.commit()
+        
+        print(f"DEBUG: Submission saved successfully - upload_id={upload.id}, submitted_at={upload.submitted_at}")
         
         return jsonify({
             'id': upload.id,
@@ -114,13 +135,27 @@ def get_submission_history():
     try:
         user_id = get_current_user_id()
         
+        # Debug logging
+        print(f"DEBUG /submissions/history: user_id={user_id}")
+        print(f"DEBUG session: {session}")
+        
+        if not user_id:
+            return jsonify({'error': 'Unauthorized - no user session found'}), 401
+        
         # Pagination parameters
         page = request.args.get('page', 1, type=int)
         limit = request.args.get('limit', 10, type=int)
         
-        # Filter parameters
+        # Filter parameters - ignore 'undefined' string values
         status = request.args.get('status')
+        if status == 'undefined' or status == 'all':
+            status = None
+            
         waste_type = request.args.get('type')
+        if waste_type == 'undefined' or waste_type == 'all':
+            waste_type = None
+        
+        print(f"DEBUG: Filters - status={status}, type={waste_type}")
         
         # Build query - only get submitted uploads
         query = Upload.query.filter(
@@ -128,6 +163,10 @@ def get_submission_history():
             Upload.is_deleted == False,
             Upload.submitted_at.isnot(None)  # Only submitted uploads
         )
+        
+        # Debug: count total submissions
+        total_submissions = query.count()
+        print(f"DEBUG: Found {total_submissions} total submissions for user {user_id}")
         
         # Apply filters
         if status:
@@ -159,6 +198,9 @@ def get_submission_history():
             }
             submissions.append(submission)
         
+        print(f"DEBUG: Returning {len(submissions)} submissions")
+        print(f"DEBUG: First submission: {submissions[0] if submissions else 'None'}")
+
         return jsonify({
             'submissions': submissions,
             'total': pagination.total,

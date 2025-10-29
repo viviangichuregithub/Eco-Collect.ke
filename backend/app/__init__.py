@@ -24,8 +24,15 @@ def create_app(config_class=DevelopmentConfig):
     bcrypt.init_app(app)
     migrate.init_app(app, db)
 
-    # CORS with credentials
-    cors.init_app(app, supports_credentials=True, origins=[config_class.CORS_ORIGINS])
+    # CORS with credentials - allow all headers for multipart/form-data
+    cors.init_app(
+        app, 
+        supports_credentials=True, 
+        origins=[config_class.CORS_ORIGINS],
+        allow_headers=["Content-Type", "Authorization"],
+        expose_headers=["Content-Type"],
+        methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
+    )
 
     # Register blueprints
     from app.routes.auth import auth_bp

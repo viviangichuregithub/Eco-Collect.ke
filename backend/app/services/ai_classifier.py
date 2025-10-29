@@ -4,10 +4,17 @@ AI-powered waste classification service using deep learning
 import os
 import numpy as np
 from PIL import Image
-import tensorflow as tf
-from tensorflow import keras
 from typing import Dict, Any
 import json
+
+# TensorFlow is optional - only needed for model-based classification
+try:
+    import tensorflow as tf
+    from tensorflow import keras
+    TF_AVAILABLE = True
+except ImportError:
+    TF_AVAILABLE = False
+    print("⚠️  TensorFlow not available. Using heuristic-based classification only.")
 
 class WasteClassifier:
     """
@@ -19,7 +26,8 @@ class WasteClassifier:
         'plastic': {'points': 10, 'description': 'Plastic waste (bottles, containers, packaging)'},
         'paper': {'points': 8, 'description': 'Paper and cardboard waste'},
         'glass': {'points': 12, 'description': 'Glass bottles and containers'},
-        'metal': {'points': 15, 'description': 'Metal cans and containers'}
+        'metal': {'points': 15, 'description': 'Metal cans and containers'},
+        'mixed': {'points': 5, 'description': 'Mixed recyclable waste'}
     }
     
     def __init__(self, model_path=None):
@@ -217,7 +225,7 @@ class WasteClassifier:
         
         # If confidence is too low, default to mixed
         if confidence < 40:
-            waste_type = 'Mixed'
+            waste_type = 'mixed'
             confidence = 60
         
         return {

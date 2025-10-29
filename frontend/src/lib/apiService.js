@@ -1,5 +1,5 @@
 // API Service Layer for Eco-Collect Kenya
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 const IS_DEVELOPMENT = process.env.NODE_ENV === 'development';
 
 class ApiService {
@@ -58,8 +58,13 @@ class ApiService {
             config.headers.Authorization = `Bearer ${this.token}`;
         }
 
+        console.log(`API Request: ${options.method || 'GET'} ${url}`)
+        console.log('Request config:', config)
+
         try {
             const response = await fetch(url, config);
+
+            console.log(`API Response: ${response.status} ${response.statusText}`)
 
             // Handle token refresh if needed
             if (response.status === 401 && this.refreshToken) {
@@ -71,12 +76,16 @@ class ApiService {
             }
 
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                const errorData = await response.json().catch(() => ({}))
+                console.error('API Error Response:', errorData)
+                throw new Error(`HTTP error! status: ${response.status}`, { cause: errorData });
             }
 
             const contentType = response.headers.get('content-type');
             if (contentType && contentType.includes('application/json')) {
-                return await response.json();
+                const data = await response.json();
+                console.log('API Response Data:', data)
+                return data;
             }
             return response;
         } catch (error) {

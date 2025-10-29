@@ -34,14 +34,19 @@ export const updateProfile = async (data) => {
 export const uploadProfileImage = async (file) => {
   const formData = new FormData()
   formData.append("image", file)
+  
+  console.log("Uploading profile image:", file.name, file.type, file.size)
 
   try {
-    const res = await api.post("/profile/upload-avatar", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    })
+    // Let axios set Content-Type automatically with boundary
+    const res = await api.post("/profile/upload-avatar", formData)
+    console.log("Upload successful:", res.data)
     return res.data
   } catch (err) {
     console.error("Failed to upload avatar:", err)
+    console.error("Error response:", err.response?.data)
+    console.error("Error status:", err.response?.status)
+    console.error("Error headers:", err.response?.headers)
     throw err
   }
 }

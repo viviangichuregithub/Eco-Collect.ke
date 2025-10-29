@@ -5,12 +5,17 @@ import { AuthProvider } from "../context/AuthContext";
 export const metadata = {
   title: "EcoCollect",
   description: "AI-powered recycling and rewards platform",
+  icons: {
+    icon: '/favicon.svg',
+    shortcut: '/favicon.svg',
+    apple: '/favicon.svg',
+  },
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
-      <body>
+    <html lang="en" suppressHydrationWarning>
+      <body suppressHydrationWarning>
         <AuthProvider>
           {children}
         </AuthProvider>

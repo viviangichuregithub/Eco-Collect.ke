@@ -114,30 +114,41 @@ class Upload(db.Model):
     @staticmethod
     def calculate_points(waste_type, weight):
         """
-        Calculate points based on waste type and weight
-        Points per kg:
-        - E-waste: 50 points/kg (highest value)
-        - Glass: 30 points/kg
-        - Metal: 25 points/kg
-        - Plastic: 20 points/kg
-        - Paper: 15 points/kg
-        - Organic: 10 points/kg
-        - Other: 5 points/kg
+        Calculate points based on waste type and weight (realistic point system)
+        Base points per item/submission (not per kg):
+        - Metal: 3 points per item (cans are valuable)
+        - Glass: 2 points per item
+        - Plastic: 2 points per item
+        - Paper: 1 point per item
+        - Mixed: 1 point per item
+        
+        Weight bonus: +1 point for every 0.5kg above 0.5kg
+        Example: 1.5kg plastic = 2 (base) + 2 (weight bonus) = 4 points
         """
-        points_per_kg = {
-            'e-waste': 50,
-            'glass': 30,
-            'metal': 25,
-            'plastic': 20,
-            'paper': 15,
-            'wood/paper': 15,
-            'organic': 10,
-            'hazardous': 40,
-            'other': 5
+        # Base points per waste type
+        base_points = {
+            'metal': 3,
+            'glass': 2,
+            'plastic': 2,
+            'paper': 1,
+            'cardboard': 1,
+            'mixed': 1,
+            'organic': 1,
+            'e-waste': 5,
+            'hazardous': 4,
+            'other': 1
         }
         
-        base_points = points_per_kg.get(waste_type.lower() if waste_type else 'other', 5)
-        return int(base_points * (weight or 0))
+        # Get base points for this waste type
+        points = base_points.get(waste_type.lower() if waste_type else 'other', 1)
+        
+        # Add weight bonus: +1 point for every 0.5kg above 0.5kg
+        if weight and weight > 0.5:
+            extra_weight = weight - 0.5
+            weight_bonus = int(extra_weight / 0.5)
+            points += weight_bonus
+        
+        return max(points, 1)  # Minimum 1 point
 
 
 class CollectionCenter(db.Model):
