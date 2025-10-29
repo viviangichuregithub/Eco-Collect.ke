@@ -25,10 +25,10 @@ def get_collection_centers():
         name: type
         type: string
         description: Filter centers by accepted waste type
-      - in: query
-        name: active
-        type: boolean
-        description: Whether to include only active centers (default: true)
+            - in: query
+                name: active
+                type: boolean
+                description: "Whether to include only active centers (default: true)"
     responses:
       200:
         description: A list of collection centers
