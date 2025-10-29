@@ -24,15 +24,21 @@ def create_app(config_class=DevelopmentConfig):
     db.init_app(app)
     bcrypt.init_app(app)
     migrate.init_app(app, db)
-    # Swagger / OpenAPI docs
+    # Swagger (Swagger 2.0) template for Flasgger
+    # Flasgger's UI expects Swagger v2.0 content; using OpenAPI 3.x alongside
+    # Flasgger can produce definitions that contain both 'openapi' and 'swagger'
+    # fields which causes the UI to fail. Use swagger: '2.0' here.
     swagger_template = {
-        "openapi": "3.0.2",
+        "swagger": "2.0",
         "info": {
             "title": "Eco-Collect API",
             "version": "1.0.0",
             "description": "API documentation for Eco-Collect backend"
         },
-        "servers": [{"url": "http://localhost:5000", "description": "Local dev server"}]
+        # Swagger 2.0 uses host/basePath/schemes rather than 'servers'
+        "host": "localhost:5000",
+        "basePath": "/",
+        "schemes": ["http"]
     }
     Swagger(app, template=swagger_template)
 
