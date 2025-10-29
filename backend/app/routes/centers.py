@@ -1,4 +1,4 @@
-"""
+﻿"""
 Collection Centers routes for managing waste collection centers
 """
 from flask import Blueprint, request, jsonify
@@ -59,6 +59,7 @@ def get_collection_centers():
         return jsonify({'error': 'Failed to retrieve collection centers'}), 500
 
 
+
 @centers_bp.route('/<int:center_id>', methods=['GET'])
 def get_center_by_id(center_id):
     """Get detailed information about a specific collection center"""
@@ -73,6 +74,7 @@ def get_center_by_id(center_id):
     except Exception as e:
         print(f"Get center error: {str(e)}")
         return jsonify({'error': 'Failed to retrieve collection center'}), 500
+
 
 
 @centers_bp.route('/nearby', methods=['GET'])
@@ -126,6 +128,7 @@ def get_nearby_centers():
         return jsonify({'error': 'Failed to find nearby centers'}), 500
 
 
+
 @centers_bp.route('', methods=['POST'])
 def create_center():
     """
@@ -167,6 +170,7 @@ def create_center():
         import traceback
         traceback.print_exc()
         return jsonify({'error': 'Failed to create collection center'}), 500
+
 
 
 @centers_bp.route('/<int:center_id>', methods=['PATCH'])
@@ -213,6 +217,7 @@ def update_center(center_id):
         db.session.rollback()
         print(f"Update center error: {str(e)}")
         return jsonify({'error': 'Failed to update collection center'}), 500
+
 
 
 @centers_bp.route('/<int:center_id>', methods=['DELETE'])
@@ -263,3 +268,4 @@ def calculate_distance(lat1, lon1, lat2, lon2):
     
     distance = R * c
     return distance
+
