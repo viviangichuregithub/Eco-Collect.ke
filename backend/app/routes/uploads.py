@@ -121,12 +121,11 @@ def get_user_uploads():
     return jsonify({"uploads": uploads}), 200
 
 
-# --- GET: All uploads for corporate ---
 @uploads_bp.route("/all", methods=["GET"])
 def get_all_uploads():
-    user_role = session.get("role")
-    if user_role != "corporate":
-        return jsonify({"error": "Unauthorized: corporate access only"}), 403
+    # role = session.get("role")
+    # if role != "corporative":
+    #     return jsonify({"error": "Unauthorized: corporate access only"}), 403
 
     not_verified = request.args.get("not_verified", default=None, type=str)
     query = Upload.query.order_by(Upload.upload_date.desc())
@@ -151,33 +150,45 @@ def get_all_uploads():
     return jsonify({"uploads": uploads, "count": len(uploads)}), 200
 
 
-# --- PATCH: Approve ---
+
 @uploads_bp.route("/approve/<int:upload_id>", methods=["PATCH"])
 def approve_upload(upload_id):
-    user_role = session.get("role")
-    if user_role != "corporate":
-        return jsonify({"error": "Unauthorized: corporate access only"}), 403
+    try:
+        upload = Upload.query.get(upload_id)
+        if not upload:
+            return jsonify({"error": "Upload not found"}), 404
 
-    upload = Upload.query.get(upload_id)
-    if not upload:
-        return jsonify({"error": "Upload not found"}), 404
+        if not upload.not_verified:
+            return jsonify({"message": "Upload already verified"}), 200
 
-    if not upload.not_verified:
-        return jsonify({"message": "Upload already verified"}), 200
+        # Mark as verified
+        upload.not_verified = False
 
-    upload.not_verified = False
-    user = User.query.get(upload.user_id)
-    if user:
-        user.points = (user.points or 0) + (upload.points_awarded or 0)
-        db.session.add(user)
+        # Update user's points
+        user = User.query.get(upload.user_id)
+        if user:
+            points_to_add = upload.points_awarded or 0
+            user.point_score = (user.point_score or 0) + points_to_add
+            db.session.add(user)
+        else:
+            current_app.logger.warning(f"User {upload.user_id} not found for upload {upload.id}")
 
-    db.session.commit()
+        db.session.commit()
 
-    return jsonify({
-        "message": f"Upload #{upload.id} verified successfully.",
-        "upload": {"id": upload.id, "user_id": upload.user_id, "points_awarded": upload.points_awarded, "not_verified": upload.not_verified}
-    }), 200
+        return jsonify({
+            "message": f"Upload #{upload.id} verified successfully.",
+            "upload": {
+                "id": upload.id,
+                "user_id": upload.user_id,
+                "points_awarded": upload.points_awarded,
+                "not_verified": upload.not_verified
+            },
+            "user_point_score": user.point_score if user else None
+        }), 200
 
+    except Exception as e:
+        current_app.logger.error(f"Error approving upload {upload_id}: {e}")
+        return jsonify({"error": "Internal Server Error", "message": str(e)}), 500
 
 # --- GET: Centers ---
 @uploads_bp.route("/centres", methods=["GET"])

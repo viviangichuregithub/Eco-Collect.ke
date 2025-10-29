@@ -26,11 +26,11 @@ def create_app():
     SESSION_TYPE="filesystem",
     SESSION_FILE_DIR=session_dir,
     SESSION_COOKIE_HTTPONLY=True,
-    SESSION_COOKIE_SAMESITE="None",  
-    SESSION_COOKIE_SECURE=False,  
+    SESSION_COOKIE_SAMESITE="None",   # required for cross-site
+    SESSION_COOKIE_SECURE=True,       # must be True for SameSite=None over HTTPS
     SESSION_PERMANENT=False,
-    )
-    Session(app)
+)
+
 
     # ----------------------------
     # Extensions
@@ -71,13 +71,12 @@ def create_app():
     from app.routes.profile import profile_bp
     from app.routes.uploads import uploads_bp
     from app.routes.centers import centers_bp
-    from app.routes.history import history_bp
+
 
     app.register_blueprint(auth_bp, url_prefix="/auth")
     app.register_blueprint(profile_bp, url_prefix="/profile")
     app.register_blueprint(uploads_bp, url_prefix="/uploads")
     app.register_blueprint(centers_bp, url_prefix="/api/centers")
-    app.register_blueprint(history_bp, url_prefix="/api/history")
     
     # ----------------------------
     # Routes

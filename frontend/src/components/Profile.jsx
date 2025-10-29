@@ -72,11 +72,11 @@ Climate change is primarily driven by greenhouse gas emissions. In Kenya, transp
 - Waste Management: Proper separation and recycling of plastics, organics, metals, and glass is a critical first step. Organic waste can be composted to enrich soils, while plastics and metals can be repurposed or sold to recycling centers, reducing landfill methane emissions. County-level recycling initiatives and community collection points are excellent ways to participate in responsible waste management.
 - Clean Energy Adoption: Solar energy and biogas are practical and increasingly affordable ways for Kenyan households and communities to reduce dependence on fossil fuels. Installing solar panels for lighting, water heating, or small appliances can significantly lower your household carbon footprint, while biogas from organic waste can provide clean cooking fuel.
 - Transportation Choices: Reducing vehicle emissions is another crucial action. Walking, cycling, using public transport, or carpooling minimizes fuel consumption and urban air pollution. For longer journeys, electric or hybrid vehicles can offer sustainable alternatives as infrastructure develops.
-- Tree Planting and Green Infrastructure: Trees act as carbon sinks, reduce urban heat, prevent soil erosion, and improve air quality. Participating in tree-planting drives or creating community gardens strengthens both ecological and social resilience. Supporting climate-smart agriculture—like crop rotation, drought-resistant crops, and soil conservation—helps farmers adapt to changing weather patterns while reducing emissions.
+- Tree Planting and Green Infrastructure: Trees act as carbon sinks, reduce urban heat, prevent soil erosion, and improve air quality. Participating in tree-planting drives or creating community gardens strengthens both ecological and social resilience. Supporting climate-smart agriculture???like crop rotation, drought-resistant crops, and soil conservation???helps farmers adapt to changing weather patterns while reducing emissions.
 
 2. LIFE BELOW WATER (SDG 14)
 
-Kenya’s rivers, lakes, and coastal waters are vital for biodiversity, fisheries, and livelihoods. Protecting these ecosystems is essential for climate resilience and food security.
+Kenya???s rivers, lakes, and coastal waters are vital for biodiversity, fisheries, and livelihoods. Protecting these ecosystems is essential for climate resilience and food security.
 - Preventing Water Pollution: Avoid dumping waste into rivers, drainage systems, or directly into the ocean. Plastic and chemical waste degrade marine habitats, threaten wildlife, and accumulate toxins in the food chain.
 - Reducing Single-Use Plastics: Substituting reusable bags, bottles, and packaging reduces pollution reaching waterways. Encourage local businesses to adopt eco-friendly alternatives.
 - Mangrove and Wetland Conservation: Mangroves act as natural buffers against coastal erosion, trap carbon, and provide nursery habitats for fish. Support mangrove restoration programs along the Kenyan coast and wetland conservation efforts inland.
@@ -97,7 +97,7 @@ By aligning with SDG 13 and its related goals, every Kenyan can contribute to a 
 - Restoring degraded ecosystems from Turkana to the coastal mangroves.
 - Promoting cleaner, smarter, and sustainable cities through green infrastructure and urban planning.
 
-Together, these efforts can position Kenya as a leader in climate resilience within Africa. Each small action—planting a tree, recycling waste, conserving energy, educating others—multiplies across communities, creating meaningful change.
+Together, these efforts can position Kenya as a leader in climate resilience within Africa. Each small action???planting a tree, recycling waste, conserving energy, educating others???multiplies across communities, creating meaningful change.
 Every Kenyan can be a climate champion. Protecting our land, water, and atmosphere today ensures a healthier, more resilient future for generations to come. Let us unite in making Kenya cleaner, greener, and climate-smart.
 
 Eco-Collect Initiative
@@ -167,7 +167,7 @@ Eco-Collect Initiative
         <h1 className="text-3xl font-semibold text-gray-800 flex items-center gap-2">
           <Globe2 className="text-[#355E62]" /> Profile Information
         </h1>
-        <p className="text-gray-500 mt-1">Your account details and contribution to Kenya’s sustainability</p>
+        <p className="text-gray-500 mt-1">Your account details and contribution to Kenya???s sustainability</p>
       </div>
 
       {/* Profile Card */}
@@ -216,7 +216,7 @@ Eco-Collect Initiative
         </h3>
         <div className="bg-white rounded-lg p-4 shadow-sm">
           <p className="text-sm text-gray-600 leading-relaxed">
-            By recycling <span className="font-medium text-[#355E62]">{impactStats?.totalWeight}</span>, you've helped reduce <span className="font-medium text-[#355E62]">{impactStats?.co2Reduced}</span> CO₂ emissions — a strong contribution to Kenya’s climate action goals.
+            By recycling <span className="font-medium text-[#355E62]">{impactStats?.totalWeight}</span>, you've helped reduce <span className="font-medium text-[#355E62]">{impactStats?.co2Reduced}</span> CO??? emissions ??? a strong contribution to Kenya???s climate action goals.
           </p>
         </div>
       </div>

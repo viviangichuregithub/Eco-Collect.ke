@@ -1,17 +1,16 @@
 "use client";
-
 import React, { useState, useEffect } from "react";
 import apiService from "../lib/apiService";
 
 export default function CorporateVerification() {
   const [uploads, setUploads] = useState([]);
+  const [centres, setCentres] = useState({});
   const [loading, setLoading] = useState(true);
 
-  // --- Fetch all uploads for corporate
   const fetchUploads = async () => {
     try {
       setLoading(true);
-      const data = await apiService.getAllUploads(); // ✅ now correct
+      const data = await apiService.getAllUploads();
       setUploads(data || []);
     } catch (error) {
       console.error("Failed to fetch uploads:", error);
@@ -21,19 +20,28 @@ export default function CorporateVerification() {
     }
   };
 
+  const fetchCentres = async () => {
+    try {
+      const data = await apiService.getCenters(); // ✅ corrected function name
+      const map = {};
+      data.forEach((c) => {
+        map[c.id] = c.name || "Unknown";
+      });
+      setCentres(map);
+    } catch (error) {
+      console.error("Failed to fetch centers:", error);
+    }
+  };
+
   useEffect(() => {
+    fetchCentres();
     fetchUploads();
   }, []);
 
-  // --- Approve Upload ---
   const approve = async (id) => {
     try {
       await apiService.approveUpload(id);
-
-      // Update local state
-      setUploads((prev) =>
-        prev.map((u) => (u.id === id ? { ...u, not_verified: false } : u))
-      );
+      setUploads((prev) => prev.map((u) => (u.id === id ? { ...u, not_verified: false } : u)));
     } catch (error) {
       alert(error.message || "Failed to verify upload");
     }
@@ -56,13 +64,12 @@ export default function CorporateVerification() {
                 u.not_verified ? "bg-[#ECF1E6]" : "bg-gray-100 opacity-75"
               }`}
             >
-              <p className="text-sm text-gray-600 mb-1"><b>User:</b> {u.user_name}</p>
+              <p className="text-sm text-gray-600 mb-1"><b>User ID:</b> {u.user_id ?? "Unknown"}</p>
+              <p className="text-sm text-gray-600 mb-1"><b>Center:</b> {centres[u.centre_id] ?? "Unknown"}</p>
               <p className="text-sm text-gray-600 mb-1"><b>Category:</b> {u.category || "Unknown"}</p>
               <p className="text-sm text-gray-600 mb-1"><b>Weight:</b> {u.weight ?? "-"} g</p>
               <p className="text-sm text-gray-600 mb-1"><b>Points:</b> {u.points_awarded ?? 0}</p>
-              <p className="text-xs text-gray-500 mt-1">
-                Uploaded: {new Date(u.upload_date).toLocaleString()}
-              </p>
+              <p className="text-xs text-gray-500 mt-1">Uploaded: {new Date(u.upload_date).toLocaleString()}</p>
 
               {u.not_verified ? (
                 <div className="flex justify-center mt-4">
@@ -74,9 +81,7 @@ export default function CorporateVerification() {
                   </button>
                 </div>
               ) : (
-                <p className="text-xs text-green-700 mt-4 font-medium text-center">
-                  ✅ Verified
-                </p>
+                <p className="text-xs text-green-700 mt-4 font-medium text-center">✅ Verified</p>
               )}
             </div>
           ))}

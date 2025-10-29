@@ -33,7 +33,7 @@ end
 # Unset irrelevant variables.
 deactivate nondestructive
 
-set -gx VIRTUAL_ENV /home/vivian/moringa/phase-5/eco-collect/backend/venv
+set -gx VIRTUAL_ENV /home/vivian/moringa/eco-collect/Eco-Collect.ke/backend/venv
 
 set -gx _OLD_VIRTUAL_PATH $PATH
 set -gx PATH "$VIRTUAL_ENV/"bin $PATH

@@ -41,14 +41,11 @@ export default function History() {
         .filter(u => (filters.type !== "all" ? u.category === filters.type : true))
         .map(u => ({
           id: u.id,
-          photo: u.filename_url
-            ? `${api.defaults.baseURL.replace("/api", "")}/uploads/${u.filename_url}`
-            : "/placeholder.jpg",
           type: u.category || "Unknown",
           center: u.centre_id || "Not assigned",
           weight: parseFloat(u.weight) || 0,
           status: u.not_verified ? "Pending" : "Verified",
-          points: u.not_verified ? 0 : u.points_awarded || 0,
+          points: !u.not_verified ? u.points_awarded || 0 : 0,
           date: u.upload_date,
           not_verified: u.not_verified,
         }));
@@ -91,16 +88,10 @@ export default function History() {
       : "-";
 
   const calculateTotalStats = () => {
-    // Only include verified submissions
     const verified = submissionHistory.filter(item => !item.not_verified);
-
-    const totalWeight = verified.reduce(
-      (sum, item) => sum + (parseFloat(item.weight) || 0),
-      0
-    );
+    const totalWeight = verified.reduce((sum, item) => sum + (parseFloat(item.weight) || 0), 0);
     const totalPoints = verified.reduce((sum, item) => sum + (item.points || 0), 0);
     const verifiedCount = verified.length;
-
     return { totalWeight, totalPoints, verifiedCount };
   };
 
@@ -135,9 +126,7 @@ export default function History() {
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="bg-[#ECF1E6] rounded-lg p-4">
-          <div className="text-2xl font-bold text-[#355E62]">
-            {stats.totalWeight.toFixed(1)}kg
-          </div>
+          <div className="text-2xl font-bold text-[#355E62]">{stats.totalWeight.toFixed(1)}kg</div>
           <div className="text-sm text-gray-600">Total Waste Recycled</div>
         </div>
         <div className="bg-[#ECF1E6] rounded-lg p-4">
@@ -152,8 +141,7 @@ export default function History() {
 
       {/* Table */}
       <div className="bg-white rounded-lg shadow overflow-hidden border border-gray-200">
-        <div className="bg-[#355E62] text-white grid grid-cols-7 px-6 py-4 text-sm font-medium">
-          <div>Photo</div>
+        <div className="bg-[#355E62] text-white grid grid-cols-6 px-6 py-4 text-sm font-medium">
           <div>Type</div>
           <div>Center</div>
           <div>Weight</div>
@@ -170,19 +158,10 @@ export default function History() {
             submissionHistory.map((submission, i) => (
               <div
                 key={submission.id}
-                className={`grid grid-cols-7 gap-4 px-6 py-4 items-center ${
+                className={`grid grid-cols-6 gap-4 px-6 py-4 items-center ${
                   i % 2 === 0 ? "bg-gray-50" : "bg-white"
                 }`}
               >
-                <div className="flex items-center">
-                  <div className="w-16 h-12 bg-gray-200 rounded overflow-hidden flex items-center justify-center">
-                    <img
-                      src={submission.photo}
-                      alt={submission.type}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                </div>
                 <div className="text-sm text-gray-800">{submission.type}</div>
                 <div className="text-sm text-gray-600">{submission.center}</div>
                 <div className="text-sm text-gray-800">{submission.weight}</div>
@@ -192,9 +171,7 @@ export default function History() {
                   </span>
                 </div>
                 <div className="text-sm font-medium">{submission.points}</div>
-                <div className="text-sm text-gray-600">
-                  {formatDate(submission.date)}
-                </div>
+                <div className="text-sm text-gray-600">{formatDate(submission.date)}</div>
               </div>
             ))
           )}
