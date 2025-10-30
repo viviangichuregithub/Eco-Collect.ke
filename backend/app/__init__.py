@@ -3,10 +3,12 @@ import logging
 from flask import Flask, jsonify
 from flask_session import Session
 import cloudinary
+from flasgger import Swagger
 
 from app.config import DevelopmentConfig, ProductionConfig
 from app.extensions import db, bcrypt, migrate, cors, login_manager
 from app.models.user import User  
+
 def create_app():
     # Determine environment
     env = os.environ.get("FLASK_ENV", "development").lower()
@@ -17,20 +19,39 @@ def create_app():
     app.config.from_object(config_class)
 
     # ----------------------------
+    # Swagger setup
+    # ----------------------------
+    swagger_template_file = os.path.join(os.path.dirname(__file__), "..", "swagger.yaml")
+    swagger_config = {
+        "headers": [],
+        "specs": [
+            {
+                "endpoint": 'apispec',
+                "route": '/apispec.json',
+                "rule_filter": lambda rule: True,
+                "model_filter": lambda tag: True,
+            }
+        ],
+        "static_url_path": "/flasgger_static",
+        "swagger_ui": True,
+        "specs_route": "/docs/"
+    }
+    Swagger(app, template_file=swagger_template_file, config=swagger_config)
+
+    # ----------------------------
     # Session setup
     # ----------------------------
     session_dir = os.path.join(os.path.dirname(__file__), "..", "instance", "flask_sessions")
     os.makedirs(session_dir, exist_ok=True)
 
     app.config.update(
-    SESSION_TYPE="filesystem",
-    SESSION_FILE_DIR=session_dir,
-    SESSION_COOKIE_HTTPONLY=True,
-    SESSION_COOKIE_SAMESITE="None",   # required for cross-site
-    SESSION_COOKIE_SECURE=True,       # must be True for SameSite=None over HTTPS
-    SESSION_PERMANENT=False,
-)
-
+        SESSION_TYPE="filesystem",
+        SESSION_FILE_DIR=session_dir,
+        SESSION_COOKIE_HTTPONLY=True,
+        SESSION_COOKIE_SAMESITE="None",   # required for cross-site
+        SESSION_COOKIE_SECURE=True,       # must be True for SameSite=None over HTTPS
+        SESSION_PERMANENT=False,
+    )
 
     # ----------------------------
     # Extensions
@@ -72,7 +93,6 @@ def create_app():
     from app.routes.uploads import uploads_bp
     from app.routes.centers import centers_bp
 
-
     app.register_blueprint(auth_bp, url_prefix="/auth")
     app.register_blueprint(profile_bp, url_prefix="/profile")
     app.register_blueprint(uploads_bp, url_prefix="/uploads")
@@ -95,7 +115,7 @@ def create_app():
                 "centers": "/api/centers",
                 "health": "/health",
             },
-            "documentation": "See AI_CLASSIFICATION_README.md",
+            "documentation": "/docs/",
         }
 
     @app.route("/health")
@@ -111,7 +131,6 @@ def create_app():
 
     @app.errorhandler(500)
     def internal_error(e):
-        # Rollback in case of DB errors
         db.session.rollback()
         return jsonify({"error": "Internal Server Error", "message": str(e)}), 500
 

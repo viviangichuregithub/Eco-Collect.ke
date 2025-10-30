@@ -1,0 +1,235 @@
+openapi: 3.0.3
+info:
+  title: Eco-Collect API
+  description: API documentation for the Eco-Collect backend
+  version: 1.0.0
+servers:
+  - url: http://localhost:5000
+    description: Development server
+  - url: https://eco-collect-new.onrender.com
+    description: Production server
+tags:
+  - name: Auth
+  - name: Centers
+  - name: Index
+  - name: Profile
+  - name: Uploads
+  - name: Static
+paths:
+  /auth/forgot-password:
+    post:
+      summary: Forgot password
+      tags: [Auth]
+      responses:
+        '200':
+          description: Password reset email sent
+  /auth/login:
+    post:
+      summary: User login
+      tags: [Auth]
+      responses:
+        '200':
+          description: Login successful
+  /auth/logout:
+    post:
+      summary: Logout user
+      tags: [Auth]
+      responses:
+        '200':
+          description: Logout successful
+  /auth/me:
+    get:
+      summary: Get current user profile
+      tags: [Auth]
+      responses:
+        '200':
+          description: User profile returned
+  /auth/register:
+    post:
+      summary: Register new user
+      tags: [Auth]
+      responses:
+        '201':
+          description: User registered successfully
+  /auth/reset-password/{token}:
+    post:
+      summary: Reset password
+      tags: [Auth]
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Password reset successful
+  /api/centers/:
+    get:
+      summary: List centers
+      tags: [Centers]
+      responses:
+        '200':
+          description: List of centers
+    post:
+      summary: Create center
+      tags: [Centers]
+      responses:
+        '201':
+          description: Center created successfully
+  /api/centers/{center_id}:
+    get:
+      summary: Get a specific center
+      tags: [Centers]
+      parameters:
+        - name: center_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Center details
+    patch:
+      summary: Update a specific center (partial)
+      tags: [Centers]
+      parameters:
+        - name: center_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Center updated successfully
+    put:
+      summary: Update a specific center (full)
+      tags: [Centers]
+      parameters:
+        - name: center_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Center updated successfully
+    delete:
+      summary: Delete a specific center
+      tags: [Centers]
+      parameters:
+        - name: center_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Center deleted successfully
+  /health:
+    get:
+      summary: Health check endpoint
+      tags: [Health]
+      responses:
+        '200':
+          description: Server is healthy
+  /:
+    get:
+      summary: Root endpoint
+      tags: [Index]
+      responses:
+        '200':
+          description: Welcome endpoint
+  /profile/me:
+    get:
+      summary: Get current user profile (authenticated)
+      tags: [Profile]
+      responses:
+        '200':
+          description: User profile data
+  /profile/upload-avatar:
+    post:
+      summary: Upload avatar
+      tags: [Profile]
+      responses:
+        '200':
+          description: Avatar uploaded successfully
+  /profile/uploads/{filename}:
+    get:
+      summary: Get uploaded file by filename
+      tags: [Profile]
+      parameters:
+        - name: filename
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: File retrieved
+  /uploads/approve/{upload_id}:
+    patch:
+      summary: Approve an upload
+      tags: [Uploads]
+      parameters:
+        - name: upload_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Upload approved
+  /uploads/all:
+    get:
+      summary: Get all uploads
+      tags: [Uploads]
+      responses:
+        '200':
+          description: List of all uploads
+  /uploads/centres:
+    get:
+      summary: Get uploads per centre
+      tags: [Uploads]
+      responses:
+        '200':
+          description: List of uploads by centre
+  /uploads/:
+    get:
+      summary: Get user uploads
+      tags: [Uploads]
+      responses:
+        '200':
+          description: List of user uploads
+    post:
+      summary: Upload a file
+      tags: [Uploads]
+      responses:
+        '201':
+          description: File uploaded successfully
+  /uploads/{filename}:
+    get:
+      summary: Get uploaded file
+      tags: [Uploads]
+      parameters:
+        - name: filename
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: File retrieved
+  /static/{path}:
+    get:
+      summary: Static files
+      tags: [Static]
+      parameters:
+        - name: path
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Static file served
